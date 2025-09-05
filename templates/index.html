@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>XML Grouper</title>
+    <title>Generic XML Grouper</title>
 </head>
 <body>
     <h2>Upload XML File</h2>
@@ -10,8 +10,21 @@
         <button type="submit">Upload & Preview</button>
     </form>
 
+    {% if tags %}
+    <h2>Select Tag to Group</h2>
+    <form action="/group" method="post">
+        <select name="selected_tag" required>
+            {% for tag in tags %}
+                <option value="{{ tag }}" {% if tag==selected_tag %}selected{% endif %}>{{ tag }}</option>
+            {% endfor %}
+        </select>
+        <input type="hidden" name="xml_content" value="{{ xml_preview }}">
+        <button type="submit">Group Selected Tag</button>
+    </form>
+    {% endif %}
+
     {% if xml_preview %}
-    <h2>Grouped XML Preview</h2>
+    <h2>XML Preview</h2>
     <form action="/download" method="post">
         <textarea name="file_content" rows="25" cols="100">{{ xml_preview }}</textarea><br><br>
         <button type="submit">Download Grouped XML</button>
