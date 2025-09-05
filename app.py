@@ -12,65 +12,69 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "xml_preview": None})
+    return templates.TemplateResponse("index.html", {"request": request, "xml_preview": None, "tags": []})
 
 
-def generic_group_xml(root: ET.Element) -> ET.Element:
+def get_groupable_tags(root: ET.Element):
     """
-    Recursively group repeating child elements by shared key values.
-    For children with the same tag under the same parent, tries to group
-    by the first text child found. Falls back to unique id if no key.
+    Return a list of tags that repeat under the same parent.
+    """
+    candidates = set()
+    for parent in root.iter():
+        tag_count = defaultdict(int)
+        for child in parent:
+            tag_count[child.tag] += 1
+        for tag, count in tag_count.items():
+            if count > 1:
+                candidates.add(tag)
+    return list(candidates)
+
+
+def group_xml_by_tag(root: ET.Element, tag_to_group: str) -> ET.Element:
+    """
+    Group elements with tag `tag_to_group` by first child text.
     """
     for parent in root.iter():
-        children = list(parent)
-        tag_count = defaultdict(list)
+        # Find all children with the selected tag
+        children = [c for c in parent if c.tag == tag_to_group]
+        if len(children) > 1:
+            # Group by first child text
+            key_map = defaultdict(list)
+            for c in children:
+                key = None
+                for sub in c:
+                    if sub.text and sub.text.strip():
+                        key = sub.text.strip()
+                        break
+                if key is None:
+                    key = id(c)
+                key_map[key].append(c)
 
-        # Group children by tag
-        for child in children:
-            tag_count[child.tag].append(child)
-
-        for tag, elems in tag_count.items():
-            if len(elems) > 1:
-                # Attempt to group by common key
-                key_map = defaultdict(list)
-                for e in elems:
-                    key = None
-                    # Pick first child with text as key
-                    for sub in e:
-                        if sub.text and sub.text.strip():
-                            key = sub.text.strip()
-                            break
-                    if key is None:
-                        key = id(e)  # fallback unique id
-                    key_map[key].append(e)
-
-                # Merge elements with same key
-                for key, group in key_map.items():
-                    if len(group) > 1:
-                        base = group[0]
-                        for other in group[1:]:
-                            for sub in other:
-                                # Avoid overwriting existing tags
-                                if base.find(sub.tag) is None:
-                                    base.append(sub)
-                            parent.remove(other)
+            # Merge children with same key
+            for key, group in key_map.items():
+                if len(group) > 1:
+                    base = group[0]
+                    for other in group[1:]:
+                        for sub in other:
+                            if base.find(sub.tag) is None:
+                                base.append(sub)
+                        parent.remove(other)
     return root
 
 
-def process_xml(content: bytes) -> str:
-    """Parse, group, and pretty-print XML."""
-    root = ET.fromstring(content)
-    grouped_root = generic_group_xml(root)
-    xml_bytes = ET.tostring(grouped_root, encoding="utf-8", xml_declaration=True)
-    pretty_xml = xml.dom.minidom.parseString(xml_bytes).toprettyxml(indent="    ")
-    return pretty_xml
+def pretty_xml(root: ET.Element) -> str:
+    xml_bytes = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    parsed = xml.dom.minidom.parseString(xml_bytes)
+    return parsed.toprettyxml(indent="    ")
 
 
 @app.post("/upload", response_class=HTMLResponse)
 async def upload_xml(request: Request, file: UploadFile = File(...)):
     try:
         content = await file.read()
-        xml_preview = process_xml(content)
+        root = ET.fromstring(content)
+        tags = get_groupable_tags(root)
+        xml_preview = pretty_xml(root)
     except Exception as e:
         return HTMLResponse(f"<h2>Error parsing XML:</h2><pre>{e}</pre>")
 
@@ -79,7 +83,29 @@ async def upload_xml(request: Request, file: UploadFile = File(...)):
         {
             "request": request,
             "xml_preview": xml_preview,
+            "tags": tags,
             "filename": file.filename
+        }
+    )
+
+
+@app.post("/group", response_class=HTMLResponse)
+async def group_xml(request: Request, xml_content: str = Form(...), selected_tag: str = Form(...)):
+    try:
+        root = ET.fromstring(xml_content.encode("utf-8"))
+        grouped_root = group_xml_by_tag(root, selected_tag)
+        xml_preview = pretty_xml(grouped_root)
+        tags = get_groupable_tags(grouped_root)
+    except Exception as e:
+        return HTMLResponse(f"<h2>Error processing XML:</h2><pre>{e}</pre>")
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "xml_preview": xml_preview,
+            "tags": tags,
+            "selected_tag": selected_tag
         }
     )
 
