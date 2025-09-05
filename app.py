@@ -1,10 +1,9 @@
 from fastapi import FastAPI, UploadFile, File, Request, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
-import xml.etree.ElementTree as ET
+from lxml import etree
 from collections import defaultdict
 import io
-import xml.dom.minidom
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -12,62 +11,134 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "xml_preview": None})
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "xml_preview": None, "tags": [], "keys": [], "child_tags": []}
+    )
 
 
-def group_xml(content: bytes) -> str:
-    """Parse, group, and pretty-print XML by XRefCode."""
-    root = ET.fromstring(content)
+def get_groupable_tags(xml_content: str):
+    parser = etree.XMLParser(remove_blank_text=True)
+    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+    candidates = set()
+    for parent in root.xpath("//*"):
+        counts = defaultdict(int)
+        for child in parent:
+            counts[child.tag] += 1
+        for tag, count in counts.items():
+            if count > 1:
+                candidates.add(tag)
+    return list(candidates)
 
-    # Group Employees by XRefCode
-    grouped = defaultdict(list)
-    for emp in root.findall("Employee"):
-        xref = emp.find("XRefCode").text
-        grouped[xref].append(emp)
 
-    # Build new XML with grouped Jobs
-    new_root = ET.Element("EmployeeImport", root.attrib)
-    for xref, employees in grouped.items():
-        base_emp = employees[0]
-        emp_node = ET.SubElement(new_root, "Employee")
-        for tag in ["XRefCode", "EmployeeNumber", "FirstName", "LastName"]:
-            elem = base_emp.find(tag)
-            if elem is not None:
-                ET.SubElement(emp_node, tag).text = elem.text
+def get_child_keys(xml_content: str, tag_to_group: str):
+    parser = etree.XMLParser(remove_blank_text=True)
+    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+    elem = root.find(f".//{tag_to_group}")
+    if elem is not None:
+        return [child.tag for child in elem]
+    return []
 
-        for emp in employees:
-            for job in emp.findall("Job"):
-                emp_node.append(job)
 
-    # Convert to bytes and pretty-print
-    xml_bytes = ET.tostring(new_root, encoding="utf-8", xml_declaration=True)
-    parsed = xml.dom.minidom.parseString(xml_bytes)
-    pretty_xml = parsed.toprettyxml(indent="    ")
-    return pretty_xml
+def get_child_tags(xml_content: str, tag_to_group: str):
+    """Return all unique child tags under the selected parent tag"""
+    parser = etree.XMLParser(remove_blank_text=True)
+    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+    tags = set()
+    for elem in root.findall(f".//{tag_to_group}"):
+        for child in elem:
+            tags.add(child.tag)
+    return list(tags)
+
+
+def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, merge_tags: list):
+    parser = etree.XMLParser(remove_blank_text=True)
+    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+
+    for parent in root.xpath(f".//{tag_to_group}/.."):
+        children = parent.findall(tag_to_group)
+        if len(children) <= 1:
+            continue
+
+        key_map = defaultdict(list)
+        for c in children:
+            key_elem = c.find(key_tag)
+            key = key_elem.text.strip() if key_elem is not None and key_elem.text else id(c)
+            key_map[key].append(c)
+
+        for key, group in key_map.items():
+            if len(group) > 1:
+                base = group[0]
+                for other in group[1:]:
+                    # Append only the selected child tags to merge
+                    for tag in merge_tags:
+                        for sub in other.findall(tag):
+                            base.append(sub)
+                    parent.remove(other)
+
+    return etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8")
 
 
 @app.post("/upload", response_class=HTMLResponse)
 async def upload_xml(request: Request, file: UploadFile = File(...)):
-    try:
-        content = await file.read()
-        xml_preview = group_xml(content)
-    except Exception as e:
-        return HTMLResponse(f"<h2>Error parsing XML:</h2><pre>{e}</pre>")
+    content = await file.read()
+    xml_str = content.decode("utf-8")
+    tags = get_groupable_tags(xml_str)
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "xml_preview": xml_str, "tags": tags, "keys": [], "child_tags": []}
+    )
 
-    # Render preview with download form
+
+@app.post("/select_key", response_class=HTMLResponse)
+async def select_key(request: Request, xml_content: str = Form(...), selected_tag: str = Form(...)):
+    keys = get_child_keys(xml_content, selected_tag)
+    child_tags = get_child_tags(xml_content, selected_tag)
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
-            "xml_preview": xml_preview,
-            "filename": file.filename
+            "xml_preview": xml_content,
+            "tags": [selected_tag],
+            "keys": keys,
+            "child_tags": child_tags,
+            "selected_tag": selected_tag,
+            "selected_key": None,
+            "selected_child_tags": []
+        }
+    )
+
+
+@app.post("/group", response_class=HTMLResponse)
+async def group_xml(
+    request: Request,
+    xml_content: str = Form(...),
+    selected_tag: str = Form(...),
+    selected_key: str = Form(...),
+    selected_child_tags: str = Form(...)
+):
+    # selected_child_tags comes as comma-separated string
+    merge_tags = [tag.strip() for tag in selected_child_tags.split(",") if tag.strip()]
+    grouped_xml = group_xml_by_tag_and_key(xml_content, selected_tag, selected_key, merge_tags)
+    tags = get_groupable_tags(grouped_xml)
+    child_tags = get_child_tags(grouped_xml, selected_tag)
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "xml_preview": grouped_xml,
+            "tags": tags,
+            "keys": [selected_key],
+            "child_tags": child_tags,
+            "selected_tag": selected_tag,
+            "selected_key": selected_key,
+            "selected_child_tags": merge_tags
         }
     )
 
 
 @app.post("/download")
 async def download_xml(file_content: str = Form(...)):
-    """Download XML from preview."""
     xml_file = io.BytesIO(file_content.encode("utf-8"))
     return StreamingResponse(
         xml_file,
