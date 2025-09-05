@@ -4,10 +4,18 @@
     <title>XML Grouper</title>
 </head>
 <body>
-    <h2>Upload XML</h2>
+    <h2>Upload XML File</h2>
     <form action="/upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file" accept=".xml" required>
-        <button type="submit">Upload</button>
+        <button type="submit">Upload & Preview</button>
     </form>
+
+    {% if xml_preview %}
+    <h2>Grouped XML Preview</h2>
+    <form action="/download" method="post">
+        <textarea name="file_content" rows="20" cols="100">{{ xml_preview }}</textarea><br><br>
+        <button type="submit">Download Grouped XML</button>
+    </form>
+    {% endif %}
 </body>
 </html>
