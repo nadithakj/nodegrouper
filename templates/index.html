@@ -10,16 +10,30 @@
         <button type="submit">Upload & Preview</button>
     </form>
 
-    {% if tags %}
+    {% if tags and not keys %}
     <h2>Select Tag to Group</h2>
-    <form action="/group" method="post">
+    <form action="/select_key" method="post">
         <select name="selected_tag" required>
             {% for tag in tags %}
                 <option value="{{ tag }}" {% if tag==selected_tag %}selected{% endif %}>{{ tag }}</option>
             {% endfor %}
         </select>
         <input type="hidden" name="xml_content" value="{{ xml_preview }}">
-        <button type="submit">Group Selected Tag</button>
+        <button type="submit">Next: Select Key</button>
+    </form>
+    {% endif %}
+
+    {% if keys %}
+    <h2>Select Key for Grouping "{{ selected_tag }}"</h2>
+    <form action="/group" method="post">
+        <select name="selected_key" required>
+            {% for key in keys %}
+                <option value="{{ key }}" {% if key==selected_key %}selected{% endif %}>{{ key }}</option>
+            {% endfor %}
+        </select>
+        <input type="hidden" name="xml_content" value="{{ xml_preview }}">
+        <input type="hidden" name="selected_tag" value="{{ selected_tag }}">
+        <button type="submit">Group</button>
     </form>
     {% endif %}
 
