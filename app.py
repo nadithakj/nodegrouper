@@ -12,20 +12,19 @@ templates = Jinja2Templates(directory="templates")
 # ---------------- Landing Page ----------------
 @app.get("/", response_class=HTMLResponse)
 async def landing(request: Request):
-    # Just shows the landing page with a button to go to the XML app
     return templates.TemplateResponse("landing.html", {"request": request})
 
 
-# ---------------- XML App Home ----------------
+# ---------------- XML Node Grouper App ----------------
 @app.get("/app", response_class=HTMLResponse)
-async def home(request: Request):
+async def xml_app(request: Request):
     return templates.TemplateResponse(
         "index.html",
         {"request": request, "xml_preview": None, "tags": [], "keys": [], "child_tags": []}
     )
 
 
-# ---------------- XML Parsing Utilities ----------------
+# ---------------- Helper Functions ----------------
 def get_groupable_tags(xml_content: str):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
@@ -78,6 +77,7 @@ def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, 
             if len(group) > 1:
                 base = group[0]
                 for other in group[1:]:
+                    # Append only the selected child tags to merge
                     for tag in merge_tags:
                         for sub in other.findall(tag):
                             base.append(sub)
@@ -87,7 +87,7 @@ def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, 
 
 
 # ---------------- Upload XML ----------------
-@app.post("/app/upload", response_class=HTMLResponse)
+@app.post("/upload", response_class=HTMLResponse)
 async def upload_xml(request: Request, file: UploadFile = File(...)):
     content = await file.read()
     xml_str = content.decode("utf-8")
@@ -98,8 +98,8 @@ async def upload_xml(request: Request, file: UploadFile = File(...)):
     )
 
 
-# ---------------- Select Parent Tag ----------------
-@app.post("/app/select_key", response_class=HTMLResponse)
+# ---------------- Select Key ----------------
+@app.post("/select_key", response_class=HTMLResponse)
 async def select_key(request: Request, xml_content: str = Form(...), selected_tag: str = Form(...)):
     keys = get_child_keys(xml_content, selected_tag)
     child_tags = get_child_tags(xml_content, selected_tag)
@@ -119,7 +119,7 @@ async def select_key(request: Request, xml_content: str = Form(...), selected_ta
 
 
 # ---------------- Group XML ----------------
-@app.post("/app/group", response_class=HTMLResponse)
+@app.post("/group", response_class=HTMLResponse)
 async def group_xml(
     request: Request,
     xml_content: str = Form(...),
@@ -147,7 +147,7 @@ async def group_xml(
 
 
 # ---------------- Download XML ----------------
-@app.post("/app/download")
+@app.post("/download")
 async def download_xml(file_content: str = Form(...)):
     xml_file = io.BytesIO(file_content.encode("utf-8"))
     return StreamingResponse(
