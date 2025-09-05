@@ -41,24 +41,26 @@ def get_child_keys(root: ET.Element, tag_to_group: str):
 
 def group_xml_by_tag_and_key(root: ET.Element, tag_to_group: str, key_tag: str) -> ET.Element:
     """
-    Group elements with tag `tag_to_group` using `key_tag` as the key.
+    Merge elements with the same key_tag value under the same parent.
+    Preserves all repeating children (like multiple <Job>).
     """
     for parent in root.iter():
         children = [c for c in parent if c.tag == tag_to_group]
         if len(children) > 1:
             key_map = defaultdict(list)
             for c in children:
-                key_elem = c.find(key_tag)
+                # Use deep search for the key
+                key_elem = c.find(f".//{key_tag}")
                 key = key_elem.text.strip() if key_elem is not None and key_elem.text else id(c)
                 key_map[key].append(c)
 
-            # Merge children with same key
             for key, group in key_map.items():
                 if len(group) > 1:
                     base = group[0]
                     for other in group[1:]:
-                        for sub in other:
-                            base.append(sub)  # always append, preserve repeating children
+                        # Append all children from 'other'
+                        for sub in list(other):
+                            base.append(sub)
                         parent.remove(other)
     return root
 
