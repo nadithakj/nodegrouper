@@ -10,15 +10,12 @@
 <div class="max-w-5xl mx-auto p-6">
     <h1 class="text-3xl font-bold mb-6 text-center">XML Grouper App</h1>
 
-    <!-- Upload Section with Drag-and-Drop -->
+    <!-- Upload Section -->
     <div class="bg-white shadow rounded p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Upload XML File</h2>
-        <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
-            <div id="drop-zone" class="border-4 border-dashed border-gray-300 p-12 text-center rounded cursor-pointer">
-                Drag & Drop your XML file here, or click to select
-                <input type="file" id="file-input" name="file" class="hidden" required>
-            </div>
-            <button type="submit" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Upload</button>
+        <form action="/upload" method="post" enctype="multipart/form-data" class="flex items-center space-x-4">
+            <input type="file" name="file" class="border rounded p-2 w-full" required>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Upload</button>
         </form>
     </div>
 
@@ -26,7 +23,7 @@
     <!-- Parent Tag Selection -->
     <div class="bg-white shadow rounded p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Select Parent Tag to Group</h2>
-        <form id="parent-form" action="/select_key" method="post" class="flex items-center space-x-4">
+        <form action="/select_key" method="post" class="flex items-center space-x-4">
             <input type="hidden" name="xml_content" value="{{ xml_preview }}">
             <select name="selected_tag" class="border rounded p-2 w-full" required>
                 {% for tag in tags %}
@@ -42,7 +39,7 @@
     <!-- Key Field & Child Tags Selection -->
     <div class="bg-white shadow rounded p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">Select Key & Child Tags to Merge</h2>
-        <form id="group-form" action="/group" method="post" class="space-y-4">
+        <form action="/group" method="post" class="space-y-4">
             <div>
                 <label class="font-medium">Key Field:</label>
                 <select name="selected_key" class="border rounded p-2 w-full" required>
@@ -69,77 +66,24 @@
     {% endif %}
 
     {% if xml_preview %}
-    <!-- XML Preview with Highlight -->
+    <!-- XML Preview -->
     <div class="bg-white shadow rounded p-6 mb-6">
         <h2 class="text-xl font-semibold mb-4">XML Preview</h2>
-        <pre id="xml-preview" class="overflow-auto bg-gray-100 p-4 rounded text-sm font-mono">{{ xml_preview|safe }}</pre>
+        <textarea readonly class="w-full h-80 border rounded p-3 font-mono bg-gray-100 text-gray-800">{{ xml_preview }}</textarea>
     </div>
 
     <!-- Download -->
-    <div class="bg-white shadow rounded p-6 text-center mb-6">
+    <div class="bg-white shadow rounded p-6 text-center">
         <form action="/download" method="post">
             <input type="hidden" name="file_content" value="{{ xml_preview }}">
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 text-lg">Download Grouped XML</button>
         </form>
     </div>
     {% endif %}
-
-    <!-- Footer -->
-    <footer class="mt-8 p-4 text-center text-gray-500 text-sm border-t border-gray-200">
-        &copy; 2025 Nadi Jayasekara. All rights reserved. <br>
-        Author of this App: <strong>Nadi Jayasekara</strong>
-    </footer>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    // Drag-and-drop
-    const dropZone = document.getElementById("drop-zone");
-    const fileInput = document.getElementById("file-input");
-
-    dropZone.addEventListener("click", () => fileInput.click());
-
-    dropZone.addEventListener("dragover", e => {
-        e.preventDefault();
-        dropZone.classList.add("border-blue-500");
-    });
-
-    dropZone.addEventListener("dragleave", e => {
-        e.preventDefault();
-        dropZone.classList.remove("border-blue-500");
-    });
-
-    dropZone.addEventListener("drop", e => {
-        e.preventDefault();
-        dropZone.classList.remove("border-blue-500");
-        fileInput.files = e.dataTransfer.files;
-        document.getElementById("upload-form").submit();
-    });
-
-    // Live preview for child tag selection
-    const childSelect = document.querySelector('select[name="selected_child_tags"]');
-    if(childSelect){
-        const preview = document.getElementById("xml-preview");
-        childSelect.addEventListener("change", () => {
-            const selectedTags = Array.from(childSelect.selectedOptions).map(o => o.value);
-            const formData = new FormData();
-            formData.append("xml_content", {{ xml_preview | tojson | safe }});
-            formData.append("selected_tag", "{{ selected_tag }}");
-            formData.append("selected_key", "{{ selected_key }}");
-            formData.append("selected_child_tags", selectedTags.join(","));
-
-            fetch("/group", { method: "POST", body: formData })
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, "text/html");
-                    const updatedXML = doc.querySelector("#xml-preview").textContent;
-                    preview.textContent = updatedXML;
-                });
-        });
-    }
-});
-</script>
-
+  <footer class="mt-8 p-4 text-center text-gray-500 text-sm border-t border-gray-200">
+        &copy; 2025 Nadi Jayasekara. All rights reserved. <br>
+     
+    </footer>
 </body>
 </html>
