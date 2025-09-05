@@ -11,13 +11,13 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "xml_preview": None, "tags": [], "keys": []})
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "xml_preview": None, "tags": [], "keys": [], "child_tags": []}
+    )
 
 
 def get_groupable_tags(xml_content: str):
-    """
-    Return a list of tags that repeat under the same parent.
-    """
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
     candidates = set()
@@ -32,9 +32,6 @@ def get_groupable_tags(xml_content: str):
 
 
 def get_child_keys(xml_content: str, tag_to_group: str):
-    """
-    Return list of child element tags under tag_to_group to use as key.
-    """
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
     elem = root.find(f".//{tag_to_group}")
@@ -43,11 +40,18 @@ def get_child_keys(xml_content: str, tag_to_group: str):
     return []
 
 
-def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str):
-    """
-    Merge elements with the same key_tag value under the same parent.
-    Preserves all repeating children (like multiple <Job>).
-    """
+def get_child_tags(xml_content: str, tag_to_group: str):
+    """Return all unique child tags under the selected parent tag"""
+    parser = etree.XMLParser(remove_blank_text=True)
+    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+    tags = set()
+    for elem in root.findall(f".//{tag_to_group}"):
+        for child in elem:
+            tags.add(child.tag)
+    return list(tags)
+
+
+def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, merge_tags: list):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
 
@@ -66,8 +70,10 @@ def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str):
             if len(group) > 1:
                 base = group[0]
                 for other in group[1:]:
-                    for sub in other:
-                        base.append(sub)
+                    # Append only the selected child tags to merge
+                    for tag in merge_tags:
+                        for sub in other.findall(tag):
+                            base.append(sub)
                     parent.remove(other)
 
     return etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8")
@@ -80,20 +86,14 @@ async def upload_xml(request: Request, file: UploadFile = File(...)):
     tags = get_groupable_tags(xml_str)
     return templates.TemplateResponse(
         "index.html",
-        {
-            "request": request,
-            "xml_preview": xml_str,
-            "tags": tags,
-            "keys": [],
-            "selected_tag": None,
-            "selected_key": None
-        }
+        {"request": request, "xml_preview": xml_str, "tags": tags, "keys": [], "child_tags": []}
     )
 
 
 @app.post("/select_key", response_class=HTMLResponse)
 async def select_key(request: Request, xml_content: str = Form(...), selected_tag: str = Form(...)):
     keys = get_child_keys(xml_content, selected_tag)
+    child_tags = get_child_tags(xml_content, selected_tag)
     return templates.TemplateResponse(
         "index.html",
         {
@@ -101,16 +101,27 @@ async def select_key(request: Request, xml_content: str = Form(...), selected_ta
             "xml_preview": xml_content,
             "tags": [selected_tag],
             "keys": keys,
+            "child_tags": child_tags,
             "selected_tag": selected_tag,
-            "selected_key": None
+            "selected_key": None,
+            "selected_child_tags": []
         }
     )
 
 
 @app.post("/group", response_class=HTMLResponse)
-async def group_xml(request: Request, xml_content: str = Form(...), selected_tag: str = Form(...), selected_key: str = Form(...)):
-    grouped_xml = group_xml_by_tag_and_key(xml_content, selected_tag, selected_key)
+async def group_xml(
+    request: Request,
+    xml_content: str = Form(...),
+    selected_tag: str = Form(...),
+    selected_key: str = Form(...),
+    selected_child_tags: str = Form(...)
+):
+    # selected_child_tags comes as comma-separated string
+    merge_tags = [tag.strip() for tag in selected_child_tags.split(",") if tag.strip()]
+    grouped_xml = group_xml_by_tag_and_key(xml_content, selected_tag, selected_key, merge_tags)
     tags = get_groupable_tags(grouped_xml)
+    child_tags = get_child_tags(grouped_xml, selected_tag)
     return templates.TemplateResponse(
         "index.html",
         {
@@ -118,8 +129,10 @@ async def group_xml(request: Request, xml_content: str = Form(...), selected_tag
             "xml_preview": grouped_xml,
             "tags": tags,
             "keys": [selected_key],
+            "child_tags": child_tags,
             "selected_tag": selected_tag,
-            "selected_key": selected_key
+            "selected_key": selected_key,
+            "selected_child_tags": merge_tags
         }
     )
 
