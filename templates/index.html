@@ -36,71 +36,68 @@
     </div>
 
     {% if xml_preview %}
-    <div class="flex flex-col md:flex-row gap-6">
-        <!-- Left Side: User Prompts -->
-        <div class="md:w-1/2 space-y-6">
-            <!-- Parent Tag Selection -->
-            <div class="bg-white shadow-lg rounded-2xl p-6">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Parent Tag to Group</h2>
-                <form action="/select_key" method="post" class="flex items-center space-x-4">
-                    <input type="hidden" name="xml_content" value="{{ xml_preview }}">
-                    <select name="selected_tag" class="border rounded-lg p-3 w-full text-gray-700" required>
-                        {% for tag in tags %}
-                            <option value="{{ tag }}" {% if tag==selected_tag %}selected{% endif %}>{{ tag }}</option>
-                        {% endfor %}
-                    </select>
-                    <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 shadow">
-                        Next
-                    </button>
-                </form>
+    <!-- Parent Tag Selection -->
+    <div class="bg-white shadow-lg rounded-2xl p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Parent Tag to Group</h2>
+        <form action="/select_key" method="post" class="flex items-center space-x-4">
+            <input type="hidden" name="xml_content" value="{{ xml_preview }}">
+            <select name="selected_tag" class="border rounded-lg p-3 w-full text-gray-700" required>
+                {% for tag in tags %}
+                    <option value="{{ tag }}" {% if tag==selected_tag %}selected{% endif %}>{{ tag }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 shadow">
+                Next
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if keys %}
+    <!-- Key Field & Child Tags Selection -->
+    <div class="bg-white shadow-lg rounded-2xl p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Key & Child Tags to Merge</h2>
+        <form action="/group" method="post" class="space-y-6">
+            <div>
+                <label class="font-medium text-gray-600">Key Field:</label>
+                <select name="selected_key" class="border rounded-lg p-3 w-full text-gray-700" required>
+                    {% for key in keys %}
+                        <option value="{{ key }}" {% if key==selected_key %}selected{% endif %}>{{ key }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
-            {% if keys %}
-            <!-- Key Field & Child Tags Selection -->
-            <div class="bg-white shadow-lg rounded-2xl p-6">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Key & Child Tags to Merge</h2>
-                <form action="/group" method="post" class="space-y-6">
-                    <div>
-                        <label class="font-medium text-gray-600">Key Field:</label>
-                        <select name="selected_key" class="border rounded-lg p-3 w-full text-gray-700" required>
-                            {% for key in keys %}
-                                <option value="{{ key }}" {% if key==selected_key %}selected{% endif %}>{{ key }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="font-medium text-gray-600">Child Tags to Merge:</label>
-                        <select name="selected_child_tags" multiple size="5" class="border rounded-lg p-3 w-full text-gray-700" required>
-                            {% for child in child_tags %}
-                                <option value="{{ child }}" {% if child in selected_child_tags %}selected{% endif %}>{{ child }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <input type="hidden" name="xml_content" value="{{ xml_preview }}">
-                    <input type="hidden" name="selected_tag" value="{{ selected_tag }}">
-                    <button type="submit" class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 shadow">
-                        Group XML
-                    </button>
-                </form>
+            <div>
+                <label class="font-medium text-gray-600">Child Tags to Merge:</label>
+                <select name="selected_child_tags" multiple size="5" class="border rounded-lg p-3 w-full text-gray-700" required>
+                    {% for child in child_tags %}
+                        <option value="{{ child }}" {% if child in selected_child_tags %}selected{% endif %}>{{ child }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            {% endif %}
-        </div>
 
-        <!-- Right Side: XML Preview -->
-        <div class="md:w-1/2 bg-white shadow-lg rounded-2xl p-6">
-            <h2 class="text-2xl font-semibold mb-4 text-gray-700">XML Preview</h2>
-            <textarea readonly class="w-full h-[36rem] border rounded-lg p-4 font-mono bg-gray-100 text-gray-800">{{ xml_preview }}</textarea>
-            
-            <!-- Download -->
-            <form action="/download" method="post" class="mt-4">
-                <input type="hidden" name="file_content" value="{{ xml_preview }}">
-                <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 shadow text-lg w-full">
-                    Download Grouped XML
-                </button>
-            </form>
-        </div>
+            <input type="hidden" name="xml_content" value="{{ xml_preview }}">
+            <input type="hidden" name="selected_tag" value="{{ selected_tag }}">
+            <button type="submit" class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 shadow">
+                Group XML
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if xml_preview %}
+    <!-- XML Preview -->
+    <div class="bg-white shadow-lg rounded-2xl p-6 mb-8">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-700">XML Preview</h2>
+        <textarea readonly class="w-full h-96 border rounded-lg p-4 font-mono bg-gray-100 text-gray-800">{{ xml_preview }}</textarea>
+        
+        <!-- Download -->
+        <form action="/download" method="post" class="mt-4">
+            <input type="hidden" name="file_content" value="{{ xml_preview }}">
+            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 shadow text-lg w-full">
+                Download Grouped XML
+            </button>
+        </form>
     </div>
     {% endif %}
 </main>
