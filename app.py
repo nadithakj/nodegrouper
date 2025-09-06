@@ -24,42 +24,13 @@ async def xml_app(request: Request):
     )
 
 
-# ---------------- Schedule Import Meal Break Cleanup ----------------
+# ---------------- XML Schedule Import Cleaner ----------------
 @app.get("/meal_cleanup", response_class=HTMLResponse)
 async def meal_cleanup(request: Request):
-    return templates.TemplateResponse(
-        "meal_cleanup.html",
-        {"request": request, "original_xml": None, "cleaned_xml": None}
-    )
+    return templates.TemplateResponse("meal_cleanup.html", {"request": request})
 
 
-@app.post("/meal_cleanup/upload", response_class=HTMLResponse)
-async def meal_cleanup_upload(request: Request, file: UploadFile = File(...)):
-    content = await file.read()
-    xml_str = content.decode("utf-8")
-
-    cleaned_xml = remove_empty_tags(xml_str)
-
-    return templates.TemplateResponse(
-        "meal_cleanup.html",
-        {"request": request, "original_xml": xml_str, "cleaned_xml": cleaned_xml}
-    )
-
-
-# ---------------- Helper Functions ----------------
-def remove_empty_tags(xml_content: str):
-    parser = etree.XMLParser(remove_blank_text=True)
-    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
-
-    # Remove elements with empty text or no children
-    for elem in root.xpath("//*[not(node()) or normalize-space(text())='']"):
-        parent = elem.getparent()
-        if parent is not None:
-            parent.remove(elem)
-
-    return etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8")
-
-
+# ---------------- Helper Functions for Grouper ----------------
 def get_groupable_tags(xml_content: str):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
@@ -116,6 +87,22 @@ def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, 
                         for sub in other.findall(tag):
                             base.append(sub)
                     parent.remove(other)
+
+    return etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8")
+
+
+# ---------------- Remove Empty Tags ----------------
+def remove_empty_tags(xml_content: str):
+    parser = etree.XMLParser(remove_blank_text=True)
+    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+
+    # Remove empty elements but keep root
+    for elem in root.xpath(".//*[not(node()) or normalize-space(text())='']"):
+        if elem is root:
+            continue
+        parent = elem.getparent()
+        if parent is not None:
+            parent.remove(elem)
 
     return etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8")
 
@@ -177,6 +164,18 @@ async def group_xml(
             "selected_key": selected_key,
             "selected_child_tags": merge_tags
         }
+    )
+
+
+# ---------------- Meal Cleanup Upload ----------------
+@app.post("/meal_cleanup_upload", response_class=HTMLResponse)
+async def meal_cleanup_upload(request: Request, file: UploadFile = File(...)):
+    content = await file.read()
+    xml_str = content.decode("utf-8")
+    cleaned_xml = remove_empty_tags(xml_str)
+    return templates.TemplateResponse(
+        "meal_cleanup.html",
+        {"request": request, "xml_preview": cleaned_xml}
     )
 
 
