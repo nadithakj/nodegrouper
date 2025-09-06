@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schedule Import Meal Break Cleanup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+
+<div class="max-w-5xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">Schedule Import Meal Break Cleanup</h1>
+    <p class="text-center text-gray-600 mb-6">This is where the new app functionality will be implemented.</p>
+    
+    <!-- Add your upload or other functionality here -->
+    
+    <p class="mt-12 text-gray-500 text-sm text-center">
+        &copy; 2025 Nadi Jayasekara. All rights reserved. <br>
+        Author of this App: <strong>Nadi Jayasekara</strong>
+    </p>
+</div>
+
+</body>
+</html>
