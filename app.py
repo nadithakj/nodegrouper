@@ -22,7 +22,13 @@ async def xml_app(request: Request):
         "index.html",
         {"request": request, "xml_preview": None, "tags": [], "keys": [], "child_tags": []}
     )
-
+# ---------------- XML Schedule Import Cleaner ----------------
+@app.get("/meal_cleanup", response_class=HTMLResponse)
+async def meal_cleanup(request: Request):
+    return templates.TemplateResponse(
+        "meal_cleanup.html",
+        {"request": request}
+    )
 
 # ---------------- Helper Functions ----------------
 def get_groupable_tags(xml_content: str):
