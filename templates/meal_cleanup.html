@@ -7,18 +7,20 @@
 </head>
 <body class="bg-gray-50 font-sans min-h-screen">
 
-<div class="max-w-5xl mx-auto p-6 flex gap-6">
-    <!-- Left Side: Controls -->
-    <div class="w-1/2">
-        <!-- Back Button -->
-        <div class="mb-4">
-            <a href="/" 
-               class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
-                &larr; Back to Home
-            </a>
-        </div>
+<div class="max-w-7xl mx-auto p-6">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="/" 
+           class="flex items-center bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 w-max">
+            <!-- Home Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2.5l-7 7V17a1 1 0 001 1h4a1 1 0 001-1v-3h2v3a1 1 0 001 1h4a1 1 0 001-1v-7.5l-7-7z"/>
+            </svg>
+            Back to Home
+        </a>
+    </div>
 
-        <h1 class="text-3xl font-bold mb-6">Schedule Import Meal Break Cleanup</h1>
+    <h1 class="text-3xl font-bold mb-6">Schedule Import Meal Break Cleanup</h1>
 
     <!-- Upload Section -->
     <div class="bg-white shadow rounded p-6 mb-6">
@@ -30,13 +32,13 @@
     </div>
 
     {% if empty_tags %}
-    <div class="flex space-x-6">
+    <div class="flex gap-6">
         <!-- Left: Empty Tags Selection -->
         <div class="w-1/3 bg-white shadow rounded p-6">
             <h2 class="text-xl font-semibold mb-4">Select Empty Tags to Remove</h2>
             <form action="/meal_cleanup_clean" method="post">
                 <input type="hidden" name="xml_content" value="{{ xml_preview }}">
-                <div class="space-y-2 max-h-80 overflow-y-auto">
+                <div class="space-y-2 max-h-96 overflow-y-auto">
                     {% for tag in empty_tags %}
                     <div>
                         <label class="flex items-center space-x-2">
@@ -59,8 +61,8 @@
     {% endif %}
 
     {% if cleaned_xml %}
-    <div class="flex space-x-6 mt-6">
-        <!-- Left: Empty Tags Section (still shown for reference) -->
+    <div class="flex gap-6 mt-6">
+        <!-- Left: Cleaned Info -->
         <div class="w-1/3 bg-white shadow rounded p-6">
             <h2 class="text-xl font-semibold mb-4">Tags Cleaned</h2>
             <p class="text-gray-700">Selected empty tags have been removed from the XML.</p>
@@ -77,7 +79,6 @@
         </div>
     </div>
     {% endif %}
-
 </div>
 
 <footer class="mt-8 p-4 text-center text-gray-500 text-sm border-t border-gray-200">
