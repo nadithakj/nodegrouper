@@ -5,43 +5,40 @@
     <title>Schedule Import Meal Break Cleanup</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 font-sans min-h-screen flex flex-col items-center justify-start py-10">
+<body class="bg-gray-50 font-sans">
 
-    <div class="w-full max-w-5xl p-6 bg-white shadow rounded">
-        <h1 class="text-3xl font-bold mb-6 text-center">Schedule Import Meal Break Cleanup</h1>
+<div class="max-w-5xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">Schedule Import Meal Break Cleanup</h1>
 
-        <!-- Upload XML -->
-        <form action="/meal_cleanup/upload" method="post" enctype="multipart/form-data" class="flex items-center space-x-4 mb-6">
+    <!-- Upload Section -->
+    <div class="bg-white shadow rounded p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Upload XML File</h2>
+        <form action="/meal_cleanup_upload" method="post" enctype="multipart/form-data" class="flex items-center space-x-4">
             <input type="file" name="file" class="border rounded p-2 w-full" required>
-            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">Upload & Clean</button>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Upload & Clean</button>
         </form>
-
-        {% if cleaned_xml %}
-        <!-- Original XML -->
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-2">Original XML</h2>
-            <textarea readonly class="w-full h-64 border rounded p-3 font-mono bg-gray-100 text-gray-800">{{ original_xml }}</textarea>
-        </div>
-
-        <!-- Cleaned XML -->
-        <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-2">Cleaned XML</h2>
-            <textarea readonly class="w-full h-64 border rounded p-3 font-mono bg-gray-100 text-gray-800">{{ cleaned_xml }}</textarea>
-        </div>
-
-        <!-- Download -->
-        <div class="text-center">
-            <form action="/download" method="post">
-                <input type="hidden" name="file_content" value="{{ cleaned_xml }}">
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 text-lg">Download Cleaned XML</button>
-            </form>
-        </div>
-        {% endif %}
     </div>
 
-    <footer class="mt-10 text-center text-gray-500 text-sm">
-        &copy; 2025 Nadi Jayasekara. All rights reserved.
-    </footer>
+    {% if xml_preview %}
+    <!-- Cleaned XML Preview -->
+    <div class="bg-white shadow rounded p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Cleaned XML Preview</h2>
+        <textarea readonly class="w-full h-80 border rounded p-3 font-mono bg-gray-100 text-gray-800">{{ xml_preview }}</textarea>
+    </div>
 
+    <!-- Download Button -->
+    <div class="bg-white shadow rounded p-6 text-center">
+        <form action="/download" method="post">
+            <input type="hidden" name="file_content" value="{{ xml_preview }}">
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 text-lg">Download Cleaned XML</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<footer class="mt-8 p-4 text-center text-gray-500 text-sm border-t border-gray-200">
+    &copy; 2025 Nadi Jayasekara. All rights reserved. <br>
+    Author of this App: <strong>Nadi Jayasekara</strong>
+</footer>
 </body>
 </html>
