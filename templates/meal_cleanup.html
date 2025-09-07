@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Meal Cleanup</title>
+  <title>XML Cleanup</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -22,7 +22,7 @@
   <!-- Main Content -->
   <main class="flex-grow max-w-6xl mx-auto p-6">
     <h1 class="text-5xl font-extrabold mb-10 text-center text-gray-800">
-      XML <span class="text-red-600">Meal Cleanup</span>
+      XML <span class="text-blue-600">Cleanup</span>
     </h1>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -33,7 +33,7 @@
           <h2 class="text-2xl font-semibold mb-4 text-gray-700">Upload XML File</h2>
           <form action="/meal_cleanup" method="post" enctype="multipart/form-data" class="flex items-center space-x-4">
             <input type="file" name="file" class="border rounded-lg p-3 w-full text-gray-700" required>
-            <button type="submit" class="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 shadow">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 shadow">
               Upload
             </button>
           </form>
@@ -47,7 +47,7 @@
             <input type="hidden" name="xml_content" value="{{ xml_preview|e }}">
             {% for tag in empty_tags %}
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="tags_to_remove" value="{{ tag }}" class="h-4 w-4 text-red-600">
+                <input type="checkbox" name="tags_to_remove" value="{{ tag }}" class="h-4 w-4 text-blue-600">
                 <span>{{ tag }}</span>
               </label>
             {% endfor %}
@@ -91,4 +91,21 @@
   </main>
 
   <!-- Footer -->
-  <footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200"
+  <footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200">
+    &copy; 2025 Nadi Jayasekara. All rights reserved.
+  </footer>
+
+  <!-- Confetti -->
+  <script>
+    function launchConfetti() {
+      setTimeout(() => {
+        confetti({
+          particleCount: 200,
+          spread: 90,
+          origin: { y: 0.6 }
+        });
+      }, 150);
+    }
+  </script>
+</body>
+</html>
