@@ -78,6 +78,11 @@
         {% endif %}
 
         {% if cleaned_xml %}
+        <!-- Cleanup Summary -->
+        <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow">
+          ✅ Successfully removed <span class="font-bold">{{ removed_count }}</span> empty record{{ 's' if removed_count != 1 else '' }}.
+        </div>
+
         <!-- Cleaned Preview -->
         <div class="bg-white shadow-lg rounded-2xl p-6">
           <h2 class="text-2xl font-semibold mb-4 text-gray-700">Cleaned XML</h2>
