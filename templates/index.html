@@ -1,134 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>XML Grouper</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <meta charset="UTF-8">
+    <title>XML Grouper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col font-sans">
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-sans flex flex-col">
 
-  
-  <!-- Back Button -->
-  <div class="mb-4 p-4">
+<!-- Back Button -->
+<div class="p-4">
     <a href="/" 
-       class="flex items-center bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 w-fit">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10 2.5l-7 7V17a1 1 0 001 1h4a1 1 0 001-1v-3h2v3a1 1 0 001 1h4a1 1 0 001-1v-7.5l-7-7z"/>
-      </svg>
-      Back to Home
+       class="flex items-center bg-gray-700 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-800 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 2.5l-7 7V17a1 1 0 001 1h4a1 1 0 001-1v-3h2v3a1 1 0 001 1h4a1 1 0 001-1v-7.5l-7-7z"/>
+        </svg>
+        Back to Home
     </a>
-  </div>
+</div>
 
-  <!-- Main Content -->
-  <main class="flex-grow max-w-6xl mx-auto p-6">
-    <h1 class="text-5xl font-extrabold mb-10 text-center text-gray-800">
-      XML <span class="text-blue-600">Grouper App</span>
+<!-- Main Container -->
+<main class="flex-grow max-w-6xl mx-auto p-6">
+    <h1 class="text-4xl font-extrabold text-center mb-10 text-gray-800">
+        XML <span class="text-blue-600">Node Grouper</span>
     </h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- Left Panel: User Prompts -->
-      <div class="space-y-8">
-        <!-- Upload -->
-        <div class="bg-white shadow-lg rounded-2xl p-6">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Upload XML File</h2>
-          <form action="/upload" method="post" enctype="multipart/form-data" class="flex items-center space-x-4">
-            <input type="file" name="file" class="border rounded-lg p-3 w-full text-gray-700" required>
-            <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 shadow">
-              Upload
-            </button>
-          </form>
-        </div>
-
-        {% if xml_preview %}
-        <!-- Parent Tag -->
-        <div class="bg-white shadow-lg rounded-2xl p-6">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Parent Tag</h2>
-          <form action="/select_key" method="post" class="flex items-center space-x-4">
-            <input type="hidden" name="xml_content" value="{{ xml_preview }}">
-            <select name="selected_tag" class="border rounded-lg p-3 w-full text-gray-700" required>
-              {% for tag in tags %}
-                <option value="{{ tag }}" {% if tag==selected_tag %}selected{% endif %}>{{ tag }}</option>
-              {% endfor %}
-            </select>
-            <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 shadow">
-              Next
-            </button>
-          </form>
-        </div>
-        {% endif %}
-
-        {% if keys %}
-        <!-- Keys + Child Tags -->
-        <div class="bg-white shadow-lg rounded-2xl p-6">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Key & Child Tags</h2>
-          <form action="/group" method="post" class="space-y-6">
-            <div>
-              <label class="font-medium text-gray-600">Key Field:</label>
-              <select name="selected_key" class="border rounded-lg p-3 w-full text-gray-700" required>
-                {% for key in keys %}
-                  <option value="{{ key }}" {% if key==selected_key %}selected{% endif %}>{{ key }}</option>
-                {% endfor %}
-              </select>
+    <div class="flex gap-6">
+        <!-- Left Side: Controls -->
+        <div class="w-1/2 space-y-6">
+            <!-- Upload -->
+            <div class="bg-white shadow rounded-2xl p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload XML File</h2>
+                <form action="/upload" method="post" enctype="multipart/form-data" class="flex items-center space-x-3">
+                    <input type="file" name="file" class="border rounded-lg p-2 w-full text-gray-700" required>
+                    <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition shadow">
+                        Upload
+                    </button>
+                </form>
             </div>
 
-            <div>
-              <label class="font-medium text-gray-600">Child Tags to Merge:</label>
-              <select name="selected_child_tags" multiple size="5" class="border rounded-lg p-3 w-full text-gray-700" required>
-                {% for child in child_tags %}
-                  <option value="{{ child }}" {% if child in selected_child_tags %}selected{% endif %}>{{ child }}</option>
-                {% endfor %}
-              </select>
+            {% if xml_preview %}
+            <!-- Select Parent Tag -->
+            <div class="bg-white shadow rounded-2xl p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Select Parent Tag</h2>
+                <form action="/select_key" method="post" class="space-y-4">
+                    <input type="hidden" name="xml_content" value="{{ xml_preview }}">
+                    <select name="selected_tag" class="border rounded-lg p-2 w-full text-gray-700" required>
+                        {% for tag in tags %}
+                            <option value="{{ tag }}" {% if tag==selected_tag %}selected{% endif %}>{{ tag }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition shadow">
+                        Next
+                    </button>
+                </form>
             </div>
+            {% endif %}
 
-            <input type="hidden" name="xml_content" value="{{ xml_preview }}">
-            <input type="hidden" name="selected_tag" value="{{ selected_tag }}">
-            <button type="submit" class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 shadow">
-              Group XML
-            </button>
-          </form>
+            {% if keys %}
+            <!-- Select Key & Child Tags -->
+            <div class="bg-white shadow rounded-2xl p-6">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Select Key & Child Tags</h2>
+                <form action="/group" method="post" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-600 font-medium">Key Field:</label>
+                        <select name="selected_key" class="border rounded-lg p-2 w-full text-gray-700" required>
+                            {% for key in keys %}
+                                <option value="{{ key }}" {% if key==selected_key %}selected{% endif %}>{{ key }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-600 font-medium">Child Tags:</label>
+                        <select name="selected_child_tags" multiple size="5" class="border rounded-lg p-2 w-full text-gray-700" required>
+                            {% for child in child_tags %}
+                                <option value="{{ child }}" {% if child in selected_child_tags %}selected{% endif %}>{{ child }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="xml_content" value="{{ xml_preview }}">
+                    <input type="hidden" name="selected_tag" value="{{ selected_tag }}">
+                    <button type="submit" class="bg-purple-600 text-white px-5 py-2 rounded-lg hover:bg-purple-700 transition shadow">
+                        Group XML
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            {% if xml_preview %}
+            <!-- Download -->
+            <div class="bg-white shadow rounded-2xl p-6 text-center">
+                <form action="/download" method="post" onsubmit="fireConfetti()">
+                    <input type="hidden" name="file_content" value="{{ xml_preview }}">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition shadow text-lg">
+                        Download Grouped XML
+                    </button>
+                </form>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
-      </div>
 
-      <!-- Right Panel: XML Preview + Download -->
-      <div class="space-y-8">
+        <!-- Right Side: XML Preview -->
         {% if xml_preview %}
-        <div class="bg-white shadow-lg rounded-2xl p-6">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-700">XML Preview</h2>
-          <textarea readonly class="w-full h-96 border rounded-lg p-4 font-mono bg-gray-100 text-gray-800">{{ xml_preview }}</textarea>
-        </div>
-
-        <!-- Download -->
-        <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
-          <form id="downloadForm" action="/download" method="post" onsubmit="launchConfetti()">
-            <input type="hidden" name="file_content" value="{{ xml_preview }}">
-            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 shadow text-lg">
-              Download Grouped XML
-            </button>
-          </form>
+        <div class="w-1/2 bg-white shadow rounded-2xl p-6">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">XML Preview</h2>
+            <textarea readonly class="w-full h-[600px] border rounded-lg p-3 font-mono bg-gray-100 text-gray-800">{{ xml_preview }}</textarea>
         </div>
         {% endif %}
-      </div>
     </div>
-  </main>
+</main>
 
-  <!-- Footer -->
-  <footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200">
+<footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200">
     &copy; 2025 Nadi Jayasekara. All rights reserved.
-  </footer>
+</footer>
 
-  <!-- Confetti -->
-  <script>
-    function launchConfetti() {
-      setTimeout(() => {
+<script>
+function fireConfetti() {
+    setTimeout(() => {
         confetti({
-          particleCount: 200,
-          spread: 90,
-          origin: { y: 0.6 }
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 }
         });
-      }, 150);
-    }
-  </script>
+    }, 300);
+}
+</script>
 </body>
 </html>
