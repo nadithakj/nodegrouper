@@ -106,31 +106,34 @@ def find_empty_tags(xml_content: str):
 
 
 def remove_selected_empty_tags(xml_content: str, tags_to_remove: list):
+    """Remove selected empty tags, return (cleaned_xml, removed_count)"""
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+    removed_count = 0
 
     def is_empty(elem):
-        """Check if an element has no text and no children."""
         return (elem.text is None or elem.text.strip() == "") and len(elem) == 0
 
     def cleanup(element):
+        nonlocal removed_count
         for child in list(element):
             cleanup(child)
 
-            # Case 1: Remove selected tag if it's empty
             if child.tag in tags_to_remove and is_empty(child):
                 element.remove(child)
+                removed_count += 1
                 continue
 
-            # Case 2: Remove parent if it's empty after cleanup
             if is_empty(child):
                 element.remove(child)
+                removed_count += 1
 
     cleanup(root)
 
-    return etree.tostring(
-        root, pretty_print=True, xml_declaration=True, encoding="UTF-8"
-    ).decode("utf-8")
+    return (
+        etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8"),
+        removed_count
+    )
 
 
 # ---------------- Upload XML ----------------
@@ -223,12 +226,22 @@ async def meal_cleanup_upload(request: Request, file: UploadFile = File(...)):
 
 # ---------------- Clean Meal Cleanup ----------------
 @app.post("/meal_cleanup_clean", response_class=HTMLResponse)
-async def meal_cleanup_clean(request: Request, xml_content: str = Form(...), tags_to_remove: list = Form([])):
-    cleaned_xml = remove_selected_empty_tags(xml_content, tags_to_remove)
+async def meal_cleanup_clean(
+    request: Request,
+    xml_content: str = Form(...),
+    tags_to_remove: list = Form([])
+):
+    cleaned_xml, removed_count = remove_selected_empty_tags(xml_content, tags_to_remove)
 
     return templates.TemplateResponse(
         "meal_cleanup.html",
-        {"request": request, "xml_preview": xml_content, "empty_tags": [], "cleaned_xml": cleaned_xml}
+        {
+            "request": request,
+            "xml_preview": xml_content,
+            "empty_tags": [],
+            "cleaned_xml": cleaned_xml,
+            "removed_count": removed_count
+        }
     )
 
 
