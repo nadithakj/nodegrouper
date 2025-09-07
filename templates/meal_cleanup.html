@@ -39,23 +39,31 @@
           </form>
         </div>
 
-        {% if empty_tags %}
-        <!-- Select Tags -->
-        <div class="bg-white shadow-lg rounded-2xl p-6">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Empty Tags to Remove</h2>
-          <form action="/meal_cleanup_clean" method="post" class="space-y-3">
-            <input type="hidden" name="xml_content" value="{{ xml_preview|e }}">
-            {% for tag in empty_tags %}
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" name="tags_to_remove" value="{{ tag }}" class="h-4 w-4 text-blue-600">
-                <span>{{ tag }}</span>
-              </label>
-            {% endfor %}
-            <button type="submit" class="mt-4 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 shadow">
-              Clean XML
-            </button>
-          </form>
-        </div>
+        {% if empty_tags is defined %}
+          {% if empty_tags %}
+          <!-- Select Tags -->
+          <div class="bg-white shadow-lg rounded-2xl p-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Empty Tags to Remove</h2>
+            <form action="/meal_cleanup_clean" method="post" class="space-y-3">
+              <input type="hidden" name="xml_content" value="{{ xml_preview|e }}">
+              {% for tag in empty_tags %}
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" name="tags_to_remove" value="{{ tag }}" class="h-4 w-4 text-blue-600">
+                  <span>{{ tag }}</span>
+                </label>
+              {% endfor %}
+              <button type="submit" class="mt-4 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 shadow">
+                Clean XML
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <!-- No empty tags -->
+          <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">No Empty Records</h2>
+            <p class="text-gray-600 text-lg">🎉 No empty records to cleanup.</p>
+          </div>
+          {% endif %}
         {% endif %}
       </div>
 
