@@ -109,11 +109,24 @@ def remove_selected_empty_tags(xml_content: str, tags_to_remove: list):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
 
-    for tag in tags_to_remove:
-        for elem in root.xpath(f"//{tag}"):
-            if (elem.text is None or elem.text.strip() == "") and len(elem) == 0:
-                parent = elem.getparent()
-                parent.remove(elem)
+    def is_empty(elem):
+        """Check if an element has no text and no children."""
+        return (elem.text is None or elem.text.strip() == "") and len(elem) == 0
+
+    def cleanup(element):
+        for child in list(element):
+            cleanup(child)
+
+            # Case 1: Remove selected tag if it's empty
+            if child.tag in tags_to_remove and is_empty(child):
+                element.remove(child)
+                continue
+
+            # Case 2: Remove parent if it's empty after cleanup
+            if is_empty(child):
+                element.remove(child)
+
+    cleanup(root)
 
     return etree.tostring(
         root, pretty_print=True, xml_declaration=True, encoding="UTF-8"
