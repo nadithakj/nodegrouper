@@ -40,7 +40,7 @@
         </div>
 
         {% if empty_tags is defined %}
-          {% if empty_tags and empty_tags|length > 0 %}
+          {% if empty_tags %}
           <!-- Select Tags -->
           <div class="bg-white shadow-lg rounded-2xl p-6">
             <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Empty Tags to Remove</h2>
@@ -57,7 +57,7 @@
               </button>
             </form>
           </div>
-          {% elif xml_preview %}
+          {% else %}
           <!-- No empty tags -->
           <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
             <h2 class="text-2xl font-semibold mb-4 text-gray-700">No Empty Records</h2>
@@ -78,19 +78,16 @@
         {% endif %}
 
         {% if cleaned_xml %}
+        <!-- Cleanup Summary -->
+        <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow">
+          ✅ Successfully removed <span class="font-bold">{{ removed_count }}</span> empty record{{ 's' if removed_count != 1 else '' }}.
+        </div>
+
         <!-- Cleaned Preview -->
         <div class="bg-white shadow-lg rounded-2xl p-6">
           <h2 class="text-2xl font-semibold mb-4 text-gray-700">Cleaned XML</h2>
           <textarea readonly class="w-full h-64 border rounded-lg p-4 font-mono bg-gray-100 text-gray-800">{{ cleaned_xml }}</textarea>
         </div>
-
-        <!-- Stats -->
-        {% if removed_count is defined %}
-        <div class="bg-green-50 border border-green-200 rounded-2xl p-6 text-center shadow">
-          <h2 class="text-xl font-semibold text-green-700">✅ Cleanup Complete</h2>
-          <p class="text-green-600 text-lg mt-2">{{ removed_count }} empty tags were removed.</p>
-        </div>
-        {% endif %}
 
         <!-- Download -->
         <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
