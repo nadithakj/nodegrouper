@@ -106,29 +106,16 @@ def find_empty_tags(xml_content: str):
 
 
 def remove_selected_empty_tags(xml_content: str, tags_to_remove: list):
-    """Remove selected empty tags, return (cleaned_xml, removed_count)"""
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
     removed_count = 0
 
-    def is_empty(elem):
-        return (elem.text is None or elem.text.strip() == "") and len(elem) == 0
-
-    def cleanup(element):
-        nonlocal removed_count
-        for child in list(element):
-            cleanup(child)
-
-            if child.tag in tags_to_remove and is_empty(child):
-                element.remove(child)
+    for tag in tags_to_remove:
+        for elem in root.xpath(f"//{tag}"):
+            if (elem.text is None or elem.text.strip() == "") and len(elem) == 0:
+                parent = elem.getparent()
+                parent.remove(elem)
                 removed_count += 1
-                continue
-
-            if is_empty(child):
-                element.remove(child)
-                removed_count += 1
-
-    cleanup(root)
 
     return (
         etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8"),
@@ -220,7 +207,7 @@ async def meal_cleanup_upload(request: Request, file: UploadFile = File(...)):
 
     return templates.TemplateResponse(
         "meal_cleanup.html",
-        {"request": request, "xml_preview": xml_str, "empty_tags": empty_tags, "cleaned_xml": None}
+        {"request": request, "xml_preview": xml_str, "empty_tags": empty_tags, "cleaned_xml": None, "removed_count": None}
     )
 
 
@@ -238,7 +225,7 @@ async def meal_cleanup_clean(
         {
             "request": request,
             "xml_preview": xml_content,
-            "empty_tags": [],
+            "empty_tags": None,   # prevent "No Empty Records" message after cleaning
             "cleaned_xml": cleaned_xml,
             "removed_count": removed_count
         }
