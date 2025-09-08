@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from lxml import etree
 from collections import defaultdict
 import io
+import pandas as pd
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -27,6 +28,100 @@ async def xml_app(request: Request):
 @app.get("/meal_cleanup", response_class=HTMLResponse)
 async def meal_cleanup(request: Request):
     return templates.TemplateResponse("meal_cleanup.html", {"request": request})
+
+
+# ---------------- Excel Compare ----------------
+@app.get("/excel_compare", response_class=HTMLResponse)
+async def excel_compare(request: Request):
+    return templates.TemplateResponse(
+        "excel_compare.html",
+        {"request": request, "columns1": None, "columns2": None, "file1": None, "file2": None, "diffs": None}
+    )
+
+
+@app.post("/upload_excel_files", response_class=HTMLResponse)
+async def upload_excel_files(
+    request: Request,
+    file1: UploadFile = File(...),
+    file2: UploadFile = File(...)
+):
+    # Read both Excel files into DataFrames
+    df1 = pd.read_excel(io.BytesIO(await file1.read()))
+    df2 = pd.read_excel(io.BytesIO(await file2.read()))
+
+    # Pass column names for mapping
+    return templates.TemplateResponse(
+        "excel_compare.html",
+        {
+            "request": request,
+            "columns1": df1.columns.tolist(),
+            "columns2": df2.columns.tolist(),
+            "file1": df1.to_json(orient="records"),
+            "file2": df2.to_json(orient="records"),
+            "diffs": None
+        }
+    )
+
+
+@app.post("/map_fields", response_class=HTMLResponse)
+async def map_fields(
+    request: Request,
+    file1: str = Form(...),
+    file2: str = Form(...),
+    key_field1: str = Form(...),
+    key_field2: str = Form(...),
+    mappings: str = Form("")  # comma-separated field mappings "fieldA:fieldB"
+):
+    df1 = pd.DataFrame.from_records(eval(file1))
+    df2 = pd.DataFrame.from_records(eval(file2))
+
+    # Ensure key exists in both
+    if key_field1 not in df1.columns or key_field2 not in df2.columns:
+        return templates.TemplateResponse(
+            "excel_compare.html",
+            {
+                "request": request,
+                "error": "Key field not found in one of the files.",
+                "columns1": df1.columns.tolist(),
+                "columns2": df2.columns.tolist(),
+                "file1": df1.to_json(orient='records'),
+                "file2": df2.to_json(orient='records'),
+                "diffs": None
+            }
+        )
+
+    # Merge on key fields
+    merged = df1.merge(df2, left_on=key_field1, right_on=key_field2, suffixes=("_file1", "_file2"))
+
+    # Process optional mappings
+    diffs = []
+    if mappings:
+        for mapping in mappings.split(","):
+            if ":" in mapping:
+                f1, f2 = mapping.split(":")
+                f1, f2 = f1.strip(), f2.strip()
+                if f1 in df1.columns and f2 in df2.columns:
+                    diff_rows = merged[merged[f"{f1}_file1"] != merged[f"{f2}_file2"]]
+                    if not diff_rows.empty:
+                        diffs.append({
+                            "field1": f1,
+                            "field2": f2,
+                            "differences": diff_rows[[key_field1, f"{f1}_file1", f"{f2}_file2"]].to_dict(orient="records")
+                        })
+
+    return templates.TemplateResponse(
+        "excel_compare.html",
+        {
+            "request": request,
+            "columns1": df1.columns.tolist(),
+            "columns2": df2.columns.tolist(),
+            "file1": df1.to_json(orient='records'),
+            "file2": df2.to_json(orient='records'),
+            "diffs": diffs,
+            "selected_key1": key_field1,
+            "selected_key2": key_field2
+        }
+    )
 
 
 # ---------------- Helper Functions ----------------
