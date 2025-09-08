@@ -13,6 +13,7 @@ templates = Jinja2Templates(directory="templates")
 async def landing(request: Request):
     return templates.TemplateResponse("landing.html", {"request": request})
 
+
 # ---------------- XML Node Grouper App ----------------
 @app.get("/app", response_class=HTMLResponse)
 async def xml_app(request: Request):
@@ -21,13 +22,12 @@ async def xml_app(request: Request):
         {"request": request, "xml_preview": None, "tags": [], "keys": [], "child_tags": []}
     )
 
+
 # ---------------- XML Schedule Import Cleaner ----------------
 @app.get("/meal_cleanup", response_class=HTMLResponse)
 async def meal_cleanup(request: Request):
-    return templates.TemplateResponse(
-        "meal_cleanup.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse("meal_cleanup.html", {"request": request})
+
 
 # ---------------- Helper Functions ----------------
 def get_groupable_tags(xml_content: str):
@@ -43,6 +43,7 @@ def get_groupable_tags(xml_content: str):
                 candidates.add(tag)
     return list(candidates)
 
+
 def get_child_keys(xml_content: str, tag_to_group: str):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
@@ -50,6 +51,7 @@ def get_child_keys(xml_content: str, tag_to_group: str):
     if elem is not None:
         return [child.tag for child in elem]
     return []
+
 
 def get_child_tags(xml_content: str, tag_to_group: str):
     parser = etree.XMLParser(remove_blank_text=True)
@@ -59,6 +61,7 @@ def get_child_tags(xml_content: str, tag_to_group: str):
         for child in elem:
             tags.add(child.tag)
     return list(tags)
+
 
 def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, merge_tags: list):
     parser = etree.XMLParser(remove_blank_text=True)
@@ -79,13 +82,46 @@ def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, 
             if len(group) > 1:
                 base = group[0]
                 for other in group[1:]:
-                    # Append only the selected child tags to merge
                     for tag in merge_tags:
                         for sub in other.findall(tag):
                             base.append(sub)
                     parent.remove(other)
 
-    return etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8")
+    return etree.tostring(
+        root, pretty_print=True, xml_declaration=True, encoding="UTF-8"
+    ).decode("utf-8")
+
+
+def find_empty_tags(xml_content: str):
+    """Find tags that are empty (<Tag></Tag> or <Tag/>)"""
+    parser = etree.XMLParser(remove_blank_text=True)
+    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+    empty_tags = set()
+
+    for elem in root.xpath("//*"):
+        if (elem.text is None or elem.text.strip() == "") and len(elem) == 0:
+            empty_tags.add(elem.tag)
+
+    return list(empty_tags)
+
+
+def remove_selected_empty_tags(xml_content: str, tags_to_remove: list):
+    parser = etree.XMLParser(remove_blank_text=True)
+    root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
+    removed_count = 0
+
+    for tag in tags_to_remove:
+        for elem in root.xpath(f"//{tag}"):
+            if (elem.text is None or elem.text.strip() == "") and len(elem) == 0:
+                parent = elem.getparent()
+                parent.remove(elem)
+                removed_count += 1
+
+    return (
+        etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8"),
+        removed_count
+    )
+
 
 # ---------------- Upload XML ----------------
 @app.post("/upload", response_class=HTMLResponse)
@@ -93,16 +129,19 @@ async def upload_xml(request: Request, file: UploadFile = File(...)):
     content = await file.read()
     xml_str = content.decode("utf-8")
     tags = get_groupable_tags(xml_str)
+
     return templates.TemplateResponse(
         "index.html",
         {"request": request, "xml_preview": xml_str, "tags": tags, "keys": [], "child_tags": []}
     )
+
 
 # ---------------- Select Key ----------------
 @app.post("/select_key", response_class=HTMLResponse)
 async def select_key(request: Request, xml_content: str = Form(...), selected_tag: str = Form(...)):
     keys = get_child_keys(xml_content, selected_tag)
     child_tags = get_child_tags(xml_content, selected_tag)
+
     return templates.TemplateResponse(
         "index.html",
         {
@@ -117,6 +156,7 @@ async def select_key(request: Request, xml_content: str = Form(...), selected_ta
         }
     )
 
+
 # ---------------- Group XML ----------------
 @app.post("/group", response_class=HTMLResponse)
 async def group_xml(
@@ -128,8 +168,10 @@ async def group_xml(
 ):
     merge_tags = [tag.strip() for tag in selected_child_tags.split(",") if tag.strip()]
     grouped_xml = group_xml_by_tag_and_key(xml_content, selected_tag, selected_key, merge_tags)
+
     tags = get_groupable_tags(grouped_xml)
     child_tags = get_child_tags(grouped_xml, selected_tag)
+
     return templates.TemplateResponse(
         "index.html",
         {
@@ -144,7 +186,8 @@ async def group_xml(
         }
     )
 
-# ---------------- Download XML ----------------
+
+# ---------------- Download for Grouper ----------------
 @app.post("/download")
 async def download_xml(file_content: str = Form(...)):
     xml_file = io.BytesIO(file_content.encode("utf-8"))
@@ -152,4 +195,49 @@ async def download_xml(file_content: str = Form(...)):
         xml_file,
         media_type="application/xml",
         headers={"Content-Disposition": "attachment; filename=grouped.xml"}
+    )
+
+
+# ---------------- Upload for Meal Cleanup ----------------
+@app.post("/meal_cleanup", response_class=HTMLResponse)
+async def meal_cleanup_upload(request: Request, file: UploadFile = File(...)):
+    content = await file.read()
+    xml_str = content.decode("utf-8")
+    empty_tags = find_empty_tags(xml_str)
+
+    return templates.TemplateResponse(
+        "meal_cleanup.html",
+        {"request": request, "xml_preview": xml_str, "empty_tags": empty_tags, "cleaned_xml": None, "removed_count": None}
+    )
+
+
+# ---------------- Clean Meal Cleanup ----------------
+@app.post("/meal_cleanup_clean", response_class=HTMLResponse)
+async def meal_cleanup_clean(
+    request: Request,
+    xml_content: str = Form(...),
+    tags_to_remove: list = Form([])
+):
+    cleaned_xml, removed_count = remove_selected_empty_tags(xml_content, tags_to_remove)
+
+    return templates.TemplateResponse(
+        "meal_cleanup.html",
+        {
+            "request": request,
+            "xml_preview": xml_content,
+            "empty_tags": None,   # prevent "No Empty Records" message after cleaning
+            "cleaned_xml": cleaned_xml,
+            "removed_count": removed_count
+        }
+    )
+
+
+# ---------------- Download for Meal Cleanup ----------------
+@app.post("/meal_download")
+async def meal_download(file_content: str = Form(...)):
+    xml_file = io.BytesIO(file_content.encode("utf-8"))
+    return StreamingResponse(
+        xml_file,
+        media_type="application/xml",
+        headers={"Content-Disposition": "attachment; filename=cleaned_meal_break.xml"}
     )

@@ -1,28 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Schedule Import Meal Break Cleanup</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>XML Cleanup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex flex-col font-sans">
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col font-sans">
 
-<main class="flex-grow max-w-3xl mx-auto p-8 text-center">
-    <h1 class="text-4xl font-extrabold mb-6 text-green-700">
-        Schedule Import Meal Break Cleanup
-    </h1>
-    <p class="text-gray-700 text-lg mb-8">
-        🚧 This is a placeholder page. We’ll build the actual functionality next.
-    </p>
-
-    <a href="/" class="bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 shadow">
-        ⬅ Back to Home
+  <!-- Back to Home -->
+  <div class="p-4">
+    <a href="/" 
+       class="flex items-center bg-gray-700 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-800 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 2.5l-7 7V17a1 1 0 001 1h4a1 1 0 001-1v-3h2v3a1 1 0 001 1h4a1 1 0 001-1v-7.5l-7-7z"/>
+        </svg>
+        Back to Home
     </a>
-</main>
+</div>
 
-<footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200">
+
+
+  <!-- Main Content -->
+  <main class="flex-grow max-w-6xl mx-auto p-6">
+    <h1 class="text-5xl font-extrabold mb-10 text-center text-gray-800">
+      XML <span class="text-blue-600">Cleanup</span>
+    </h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Left Panel: Upload + Options -->
+      <div class="space-y-8">
+        <!-- Upload Section -->
+        <div class="bg-white shadow-lg rounded-2xl p-6">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Upload XML File</h2>
+          <form action="/meal_cleanup" method="post" enctype="multipart/form-data" class="flex items-center space-x-4">
+            <input type="file" name="file" class="border rounded-lg p-3 w-full text-gray-700" required>
+            <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 shadow">
+              Upload
+            </button>
+          </form>
+        </div>
+
+        {% if empty_tags is defined %}
+          {% if empty_tags %}
+          <!-- Select Tags -->
+          <div class="bg-white shadow-lg rounded-2xl p-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Select Empty Tags to Remove</h2>
+            <form action="/meal_cleanup_clean" method="post" class="space-y-3">
+              <input type="hidden" name="xml_content" value="{{ xml_preview|e }}">
+              {% for tag in empty_tags %}
+                <label class="flex items-center space-x-2">
+                  <input type="checkbox" name="tags_to_remove" value="{{ tag }}" class="h-4 w-4 text-blue-600">
+                  <span>{{ tag }}</span>
+                </label>
+              {% endfor %}
+              <button type="submit" class="mt-4 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 shadow">
+                Clean XML
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <!-- No empty tags -->
+          <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">No Empty Records</h2>
+            <p class="text-gray-600 text-lg">🎉 No empty records to cleanup.</p>
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- Right Panel: Previews -->
+      <div class="space-y-8">
+        {% if xml_preview %}
+        <!-- Original Preview -->
+        <div class="bg-white shadow-lg rounded-2xl p-6">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Original XML Preview</h2>
+          <textarea readonly class="w-full h-64 border rounded-lg p-4 font-mono bg-gray-100 text-gray-800">{{ xml_preview }}</textarea>
+        </div>
+        {% endif %}
+
+        {% if cleaned_xml %}
+        <!-- Cleanup Summary -->
+        <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow">
+          ✅ Successfully removed <span class="font-bold">{{ removed_count }}</span> empty record{{ 's' if removed_count != 1 else '' }}.
+        </div>
+
+        <!-- Cleaned Preview -->
+        <div class="bg-white shadow-lg rounded-2xl p-6">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-700">Cleaned XML</h2>
+          <textarea readonly class="w-full h-64 border rounded-lg p-4 font-mono bg-gray-100 text-gray-800">{{ cleaned_xml }}</textarea>
+        </div>
+
+        <!-- Download -->
+        <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
+          <form id="downloadForm" action="/meal_download" method="post" onsubmit="launchConfetti()">
+            <input type="hidden" name="file_content" value="{{ cleaned_xml|e }}">
+            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl hover:bg-blue-700 shadow text-lg">
+              Download Cleaned XML
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200">
     &copy; 2025 Nadi Jayasekara. All rights reserved.
-</footer>
+  </footer>
 
+  <!-- Confetti -->
+  <script>
+    function launchConfetti() {
+      setTimeout(() => {
+        confetti({
+          particleCount: 200,
+          spread: 90,
+          origin: { y: 0.6 }
+        });
+      }, 150);
+    }
+  </script>
 </body>
 </html>

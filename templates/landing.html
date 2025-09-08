@@ -2,43 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Welcome | XML Tools</title>
+  <title>XML Tools Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-between font-sans">
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col font-sans">
 
-  <!-- Main Content -->
+  <!-- Header -->
+  <header class="p-6 bg-white shadow-md">
+    <h1 class="text-4xl font-extrabold text-center text-gray-800">
+      XML <span class="text-blue-600">Tools Hub</span>
+    </h1>
+    <p class="text-center text-gray-500 mt-2">Easily process and clean up your XML files</p>
+  </header>
+
+  <!-- Main -->
   <main class="flex-grow flex items-center justify-center">
-    <div class="text-center max-w-2xl mx-auto px-6">
-      <h1 class="text-5xl font-extrabold mb-10 text-gray-800">
-        Welcome to <span class="text-blue-600">XML Tools</span>
-      </h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl w-full p-6">
+      
+      <!-- XML Grouper -->
+      <a href="/app" 
+         class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+        <!-- Icon -->
+        <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-6 group-hover:bg-blue-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
+          </svg>
+        </div>
+        <!-- Text -->
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">XML Grouper</h2>
+        <p class="text-gray-600">Group XML records by parent/child tags and streamline your data.</p>
+      </a>
 
-      <p class="text-lg text-gray-600 mb-12">
-        Choose an application below to get started
-      </p>
+      <!-- XML Cleanup -->
+      <a href="/meal_cleanup" 
+         class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+        <!-- Icon -->
+        <div class="bg-green-100 text-green-600 p-4 rounded-full mb-6 group-hover:bg-green-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m2 7H7a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h5a2 2 0 012 2v9a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <!-- Text -->
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">XML Cleanup</h2>
+        <p class="text-gray-600">Detect and remove empty tags from XML files with ease.</p>
+      </a>
 
-      <!-- Button Group -->
-      <div class="flex flex-col sm:flex-row justify-center gap-6">
-        <!-- XML Node Grouper -->
-        <a href="/app" 
-           class="bg-blue-600 text-white px-10 py-5 rounded-2xl text-xl shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1 hover:shadow-xl">
-          XML Node Grouper
-        </a>
-
-        <!-- Meal Break Cleanup -->
-        <a href="/meal_cleanup" 
-           class="bg-green-600 text-white px-10 py-5 rounded-2xl text-xl shadow-lg hover:bg-green-700 transition transform hover:-translate-y-1 hover:shadow-xl">
-          Schedule Import Meal Break Cleanup
-        </a>
-      </div>
     </div>
   </main>
 
   <!-- Footer -->
-  <footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200">
-    &copy; 2025 Nadi Jayasekara. All rights reserved. <br>
-    Author of this App: <strong>Nadi Jayasekara</strong>
+  <footer class="p-6 text-center text-gray-500 text-sm bg-gradient-to-r from-gray-100 to-gray-200 border-t">
+    &copy; 2025 Nadi Jayasekara. All rights reserved.
   </footer>
 
 </body>
