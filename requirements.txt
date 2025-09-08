@@ -4,3 +4,4 @@ jinja2
 lxml
 python-multipart
 pandas
+openpyxl
