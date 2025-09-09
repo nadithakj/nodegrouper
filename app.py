@@ -78,13 +78,11 @@ async def map_fields(
     df2 = pd.DataFrame.from_records(json.loads(file2))
 
     # Parse the JSON string from the new mapping UI
-    mappings = {}
     mapped_pairs = []
     if other_mappings and other_mappings != '[]':
         try:
             mapped_pairs = json.loads(other_mappings)
         except json.JSONDecodeError:
-            # Handle malformed JSON gracefully
             return templates.TemplateResponse(
                 "excel_compare.html",
                 {
@@ -101,7 +99,7 @@ async def map_fields(
                 }
             )
 
-    # --- New Validation Logic ---
+    # --- Validation Logic: Check for key field conflicts first ---
     for pair in mapped_pairs:
         if pair['template'] == key_field1 or pair['report'] == key_field2:
             return templates.TemplateResponse(
@@ -119,11 +117,12 @@ async def map_fields(
                     "mapped_pairs": mapped_pairs
                 }
             )
-        
-    # Build the final mappings dictionary
+
+    # --- If validation passes, build the mappings dictionary ---
+    mappings = {}
     for pair in mapped_pairs:
         mappings[pair['template']] = pair['report']
-        
+    
     # Add key fields to mappings for consistent processing
     mappings[key_field1] = key_field2
 
@@ -150,17 +149,13 @@ async def map_fields(
 
     # Compare mapped fields
     diffs = []
-    # Loop through the mappings and perform the comparison
     for f1, f2 in mappings.items():
-        # This check is crucial to prevent the KeyError
         if f1 in df1.columns and f2 in df2.columns:
-            # Check for differences, stripping whitespace for robustness
             diff_rows = merged[merged[f"{f1}_file1"].astype(str).str.strip() != merged[f"{f2}_file2"].astype(str).str.strip()]
             if not diff_rows.empty:
                 diffs.append({
                     "field1": f1,
                     "field2": f2,
-                    # Access columns correctly, using the key field's original name
                     "differences": diff_rows[[key_field1, f"{f1}_file1", f"{f2}_file2"]].to_dict(orient="records")
                 })
     
@@ -180,7 +175,6 @@ async def map_fields(
 
 
 # ---------------- Helper Functions ----------------
-# The rest of your helper functions are not changed and can be kept as-is.
 def get_groupable_tags(xml_content: str):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
