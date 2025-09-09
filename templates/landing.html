@@ -1,74 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>XML Tools Hub</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>XML Tools Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col font-sans">
 
-  <!-- Header -->
-  <header class="p-6 bg-white shadow-md">
-    <h1 class="text-4xl font-extrabold text-center text-gray-800">
-      XML <span class="text-blue-600">Tools Hub</span>
-    </h1>
-    <p class="text-center text-gray-500 mt-2">Easily process and clean up your XML files</p>
-  </header>
+    <header class="p-6 bg-white shadow-md">
+    <h1 class="text-4xl font-extrabold text-center text-gray-800">
+      XML <span class="text-blue-600">Tools Hub</span>
+    </h1>
+    <p class="text-center text-gray-500 mt-2">Easily process and clean up your XML files</p>
+  </header>
 
-  <!-- Main -->
-  <main class="flex-grow flex items-center justify-center">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl w-full p-6">
-      
-      <!-- XML Grouper -->
-      <a href="/app" 
-         class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
-        <!-- Icon -->
-        <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-6 group-hover:bg-blue-200">
+    <main class="flex-grow flex items-center justify-center">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 max-w-6xl w-full p-6">
+      
+            <a href="/app" 
+         class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+                <div class="bg-blue-100 text-blue-600 p-4 rounded-full mb-6 group-hover:bg-blue-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
+          </svg>
+        </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">XML Grouper</h2>
+        <p class="text-gray-600">Group XML records by parent/child tags and streamline your data.</p>
+      </a>
+
+            <a href="/meal_cleanup" 
+         class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+                <div class="bg-green-100 text-green-600 p-4 rounded-full mb-6 group-hover:bg-green-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m2 7H7a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h5a2 2 0 012 2v9a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">XML Cleanup</h2>
+        <p class="text-gray-600">Detect and remove empty tags from XML files with ease.</p>
+      </a>
+
+            <a href="/excel_compare" 
+         class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+                <div class="bg-purple-100 text-purple-600 p-4 rounded-full mb-6 group-hover:bg-purple-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Excel Compare</h2>
+        <p class="text-gray-600">Upload two Excel files, map fields, and find differences quickly.</p>
+      </a>
+
+      <a href="/data_hub"
+        class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+        <div class="bg-red-100 text-red-600 p-4 rounded-full mb-6 group-hover:bg-red-200">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75m-9 0h-3a2.25 2.25 0 00-2.25 2.25v10.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V13.5a2.25 2.25 0 00-2.25-2.25H13.5z" />
           </svg>
         </div>
-        <!-- Text -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">XML Grouper</h2>
-        <p class="text-gray-600">Group XML records by parent/child tags and streamline your data.</p>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Test Data Hub</h2>
+        <p class="text-gray-600">Access tools to create and manage your test data.</p>
       </a>
 
-      <!-- XML Cleanup -->
-      <a href="/meal_cleanup" 
-         class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
-        <!-- Icon -->
-        <div class="bg-green-100 text-green-600 p-4 rounded-full mb-6 group-hover:bg-green-200">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m2 7H7a2 2 0 01-2-2V7a2 2 0 012-2h5l2 2h5a2 2 0 012 2v9a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <!-- Text -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">XML Cleanup</h2>
-        <p class="text-gray-600">Detect and remove empty tags from XML files with ease.</p>
-      </a>
+    </div>
+  </main>
 
-      <!-- Excel Compare -->
-      <a href="/excel_compare" 
-         class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
-        <!-- Icon -->
-        <div class="bg-purple-100 text-purple-600 p-4 rounded-full mb-6 group-hover:bg-purple-200">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-        </div>
-        <!-- Text -->
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">Excel Compare</h2>
-        <p class="text-gray-600">Upload two Excel files, map fields, and find differences quickly.</p>
-      </a>
-
-
-    </div>
-  </main>
-
-  <!-- Footer -->
-  <footer class="p-6 text-center text-gray-500 text-sm bg-gradient-to-r from-gray-100 to-gray-200 border-t">
-    &copy; 2025 Nadi Jayasekara. All rights reserved.
-  </footer>
+    <footer class="p-6 text-center text-gray-500 text-sm bg-gradient-to-r from-gray-100 to-gray-200 border-t">
+    &copy; 2025 Nadi Jayasekara. All rights reserved.
+  </footer>
 
 </body>
 </html>
