@@ -15,7 +15,6 @@ templates = Jinja2Templates(directory="templates")
 async def landing(request: Request):
     return templates.TemplateResponse("landing.html", {"request": request})
 
-
 # ---------------- XML Node Grouper App ----------------
 @app.get("/app", response_class=HTMLResponse)
 async def xml_app(request: Request):
@@ -24,12 +23,10 @@ async def xml_app(request: Request):
         {"request": request, "xml_preview": None, "tags": [], "keys": [], "child_tags": []}
     )
 
-
 # ---------------- XML Schedule Import Cleaner ----------------
 @app.get("/meal_cleanup", response_class=HTMLResponse)
 async def meal_cleanup(request: Request):
     return templates.TemplateResponse("meal_cleanup.html", {"request": request})
-
 
 # ---------------- Excel Compare ----------------
 @app.get("/excel_compare", response_class=HTMLResponse)
@@ -38,7 +35,6 @@ async def excel_compare(request: Request):
         "excel_compare.html",
         {"request": request, "columns1": None, "columns2": None, "file1": None, "file2": None, "diffs": None}
     )
-
 
 @app.post("/upload_excel_files", response_class=HTMLResponse)
 async def upload_excel_files(
@@ -50,7 +46,7 @@ async def upload_excel_files(
     df1 = pd.read_excel(io.BytesIO(await file1.read()))
     df2 = pd.read_excel(io.BytesIO(await file2.read()))
 
-    # Pass column names for mapping
+    # Pass initial data to the template
     return templates.TemplateResponse(
         "excel_compare.html",
         {
@@ -58,11 +54,34 @@ async def upload_excel_files(
             "columns1": df1.columns.tolist(),
             "columns2": df2.columns.tolist(),
             "file1": df1.to_json(orient="records"),
-            "file2": df2.to_json(orient="records"),
-            "diffs": None
+            "file2": df2.to_json(orient="records")
         }
     )
 
+@app.post("/select_key", response_class=HTMLResponse)
+async def select_key(
+    request: Request,
+    file1: str = Form(...),
+    file2: str = Form(...),
+    key_field1: str = Form(...),
+    key_field2: str = Form(...)
+):
+    df1 = pd.DataFrame.from_records(json.loads(file1))
+    df2 = pd.DataFrame.from_records(json.loads(file2))
+
+    # Pass all necessary data, including the selected keys, to the template
+    return templates.TemplateResponse(
+        "excel_compare.html",
+        {
+            "request": request,
+            "columns1": df1.columns.tolist(),
+            "columns2": df2.columns.tolist(),
+            "file1": file1,
+            "file2": file2,
+            "selected_key1": key_field1,
+            "selected_key2": key_field2
+        }
+    )
 
 @app.post("/map_fields", response_class=HTMLResponse)
 async def map_fields(
@@ -79,13 +98,11 @@ async def map_fields(
 
     # Parse the JSON string from the new mapping UI
     mappings = {}
+    mapped_pairs = []
     if other_mappings and other_mappings != '[]':
         try:
             mapped_pairs = json.loads(other_mappings)
-            for pair in mapped_pairs:
-                mappings[pair['template']] = pair['report']
         except json.JSONDecodeError:
-            # Handle malformed JSON gracefully
             return templates.TemplateResponse(
                 "excel_compare.html",
                 {
@@ -101,8 +118,32 @@ async def map_fields(
                     "mapped_pairs": []
                 }
             )
-    else:
-        mapped_pairs = []
+
+    # --- Validation Logic: Check for key field conflicts first ---
+    for pair in mapped_pairs:
+        if pair['template'] == key_field1 or pair['report'] == key_field2:
+            return templates.TemplateResponse(
+                "excel_compare.html",
+                {
+                    "request": request,
+                    "error": "Key field is already mapped.",
+                    "columns1": df1.columns.tolist(),
+                    "columns2": df2.columns.tolist(),
+                    "file1": file1,
+                    "file2": file2,
+                    "diffs": None,
+                    "selected_key1": key_field1,
+                    "selected_key2": key_field2,
+                    "mapped_pairs": mapped_pairs
+                }
+            )
+
+    # --- If validation passes, build the mappings dictionary ---
+    for pair in mapped_pairs:
+        mappings[pair['template']] = pair['report']
+    
+    # Add key fields to mappings for consistent processing
+    mappings[key_field1] = key_field2
 
     # Ensure key fields exist
     if key_field1 not in df1.columns or key_field2 not in df2.columns:
@@ -127,17 +168,13 @@ async def map_fields(
 
     # Compare mapped fields
     diffs = []
-    # Loop through the mappings and perform the comparison
     for f1, f2 in mappings.items():
-        # This check is crucial to prevent the KeyError
         if f1 in df1.columns and f2 in df2.columns:
-            # Check for differences, stripping whitespace for robustness
             diff_rows = merged[merged[f"{f1}_file1"].astype(str).str.strip() != merged[f"{f2}_file2"].astype(str).str.strip()]
             if not diff_rows.empty:
                 diffs.append({
                     "field1": f1,
                     "field2": f2,
-                    # Access columns correctly, using the key field's original name
                     "differences": diff_rows[[key_field1, f"{f1}_file1", f"{f2}_file2"]].to_dict(orient="records")
                 })
     
@@ -169,7 +206,6 @@ def get_groupable_tags(xml_content: str):
                 candidates.add(tag)
     return list(candidates)
 
-
 def get_child_keys(xml_content: str, tag_to_group: str):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
@@ -177,7 +213,6 @@ def get_child_keys(xml_content: str, tag_to_group: str):
     if elem is not None:
         return [child.tag for child in elem]
     return []
-
 
 def get_child_tags(xml_content: str, tag_to_group: str):
     parser = etree.XMLParser(remove_blank_text=True)
@@ -188,22 +223,18 @@ def get_child_tags(xml_content: str, tag_to_group: str):
             tags.add(child.tag)
     return list(tags)
 
-
 def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, merge_tags: list):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
-
     for parent in root.xpath(f".//{tag_to_group}/.."):
         children = parent.findall(tag_to_group)
         if len(children) <= 1:
             continue
-
         key_map = defaultdict(list)
         for c in children:
             key_elem = c.find(key_tag)
             key = key_elem.text.strip() if key_elem is not None and key_elem.text else id(c)
             key_map[key].append(c)
-
         for key, group in key_map.items():
             if len(group) > 1:
                 base = group[0]
@@ -212,42 +243,34 @@ def group_xml_by_tag_and_key(xml_content: str, tag_to_group: str, key_tag: str, 
                         for sub in other.findall(tag):
                             base.append(sub)
                     parent.remove(other)
-
     return etree.tostring(
         root, pretty_print=True, xml_declaration=True, encoding="UTF-8"
     ).decode("utf-8")
-
 
 def find_empty_tags(xml_content: str):
     """Find tags that are empty (<Tag></Tag> or <Tag/>)"""
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
     empty_tags = set()
-
     for elem in root.xpath("//*"):
         if (elem.text is None or elem.text.strip() == "") and len(elem) == 0:
             empty_tags.add(elem.tag)
-
     return list(empty_tags)
-
 
 def remove_selected_empty_tags(xml_content: str, tags_to_remove: list):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
     removed_count = 0
-
     for tag in tags_to_remove:
         for elem in root.xpath(f"//{tag}"):
             if (elem.text is None or elem.text.strip() == "") and len(elem) == 0:
                 parent = elem.getparent()
                 parent.remove(elem)
                 removed_count += 1
-
     return (
         etree.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode("utf-8"),
         removed_count
     )
-
 
 # ---------------- Upload XML ----------------
 @app.post("/upload", response_class=HTMLResponse)
@@ -255,19 +278,16 @@ async def upload_xml(request: Request, file: UploadFile = File(...)):
     content = await file.read()
     xml_str = content.decode("utf-8")
     tags = get_groupable_tags(xml_str)
-
     return templates.TemplateResponse(
         "index.html",
         {"request": request, "xml_preview": xml_str, "tags": tags, "keys": [], "child_tags": []}
     )
-
 
 # ---------------- Select Key ----------------
 @app.post("/select_key", response_class=HTMLResponse)
 async def select_key(request: Request, xml_content: str = Form(...), selected_tag: str = Form(...)):
     keys = get_child_keys(xml_content, selected_tag)
     child_tags = get_child_tags(xml_content, selected_tag)
-
     return templates.TemplateResponse(
         "index.html",
         {
@@ -282,7 +302,6 @@ async def select_key(request: Request, xml_content: str = Form(...), selected_ta
         }
     )
 
-
 # ---------------- Group XML ----------------
 @app.post("/group", response_class=HTMLResponse)
 async def group_xml(
@@ -294,10 +313,8 @@ async def group_xml(
 ):
     merge_tags = [tag.strip() for tag in selected_child_tags.split(",") if tag.strip()]
     grouped_xml = group_xml_by_tag_and_key(xml_content, selected_tag, selected_key, merge_tags)
-
     tags = get_groupable_tags(grouped_xml)
     child_tags = get_child_tags(grouped_xml, selected_tag)
-
     return templates.TemplateResponse(
         "index.html",
         {
@@ -312,7 +329,6 @@ async def group_xml(
         }
     )
 
-
 # ---------------- Download for Grouper ----------------
 @app.post("/download")
 async def download_xml(file_content: str = Form(...)):
@@ -323,19 +339,16 @@ async def download_xml(file_content: str = Form(...)):
         headers={"Content-Disposition": "attachment; filename=grouped.xml"}
     )
 
-
 # ---------------- Upload for Meal Cleanup ----------------
 @app.post("/meal_cleanup", response_class=HTMLResponse)
 async def meal_cleanup_upload(request: Request, file: UploadFile = File(...)):
     content = await file.read()
     xml_str = content.decode("utf-8")
     empty_tags = find_empty_tags(xml_str)
-
     return templates.TemplateResponse(
         "meal_cleanup.html",
         {"request": request, "xml_preview": xml_str, "empty_tags": empty_tags, "cleaned_xml": None, "removed_count": None}
     )
-
 
 # ---------------- Clean Meal Cleanup ----------------
 @app.post("/meal_cleanup_clean", response_class=HTMLResponse)
@@ -345,7 +358,6 @@ async def meal_cleanup_clean(
     tags_to_remove: list = Form([])
 ):
     cleaned_xml, removed_count = remove_selected_empty_tags(xml_content, tags_to_remove)
-
     return templates.TemplateResponse(
         "meal_cleanup.html",
         {
@@ -356,7 +368,6 @@ async def meal_cleanup_clean(
             "removed_count": removed_count
         }
     )
-
 
 # ---------------- Download for Meal Cleanup ----------------
 @app.post("/meal_download")
