@@ -90,7 +90,6 @@ async def map_fields(
     df1 = pd.DataFrame.from_records(json.loads(file1))
     df2 = pd.DataFrame.from_records(json.loads(file2))
     
-    # Validation check for key fields
     if key_field1 not in df1.columns or key_field2 not in df2.columns:
         return templates.TemplateResponse(
             "excel_compare.html",
@@ -107,17 +106,9 @@ async def map_fields(
             }
         )
 
-    # Merge on key fields
     merged = df1.merge(df2, left_on=key_field1, right_on=key_field2, how='outer', suffixes=("_file1", "_file2"))
-
-    # Map the columns, handling the case where columns might not have suffixes
-    mapped_columns = {f: f"{f}_file1" if f in df2.columns else f for f in df1.columns}
-    mapped_columns.update({f: f"{f}_file2" if f in df1.columns else f for f in df2.columns})
-
-    # Compare mapped fields
     diffs = []
     
-    # Handle optional mappings
     if other_mappings and other_mappings != '[]':
         try:
             mapped_pairs = json.loads(other_mappings)
@@ -139,17 +130,14 @@ async def map_fields(
 
         for pair in mapped_pairs:
             f1, f2 = pair['template'], pair['report']
-            # Get the correct column names from the merged dataframe
             col1 = f"{f1}_file1" if f1 in df2.columns else f1
             col2 = f"{f2}_file2" if f2 in df1.columns else f2
 
             if col1 in merged.columns and col2 in merged.columns:
-                # Fill NaNs with a unique value for accurate comparison
                 diff_mask = merged[col1].fillna('__nan__').astype(str).str.strip() != merged[col2].fillna('__nan__').astype(str).str.strip()
                 diff_rows = merged[diff_mask].copy()
 
                 if not diff_rows.empty:
-                    # Append the differences to the list
                     diffs.append({
                         "field1": f1,
                         "field2": f2,
@@ -171,8 +159,12 @@ async def map_fields(
         }
     )
 
+# ---------------- Test Data Hub ----------------
+@app.get("/data_hub", response_class=HTMLResponse)
+async def data_hub(request: Request):
+    return templates.TemplateResponse("data_hub.html", {"request": request})
+
 # ---------------- Helper Functions ----------------
-# (The rest of your helper functions remain the same)
 def get_groupable_tags(xml_content: str):
     parser = etree.XMLParser(remove_blank_text=True)
     root = etree.fromstring(xml_content.encode("utf-8"), parser=parser)
