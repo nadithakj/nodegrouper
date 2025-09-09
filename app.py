@@ -78,6 +78,27 @@ async def select_key(
         }
     )
 
+# ---------------- Select Key ----------------
+@app.post("/select_key_index", response_class=HTMLResponse)
+async def select_key(request: Request, xml_content: str = Form(...), selected_tag: str = Form(...)):
+    keys = get_child_keys(xml_content, selected_tag)
+    child_tags = get_child_tags(xml_content, selected_tag)
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "xml_preview": xml_content,
+            "tags": [selected_tag],
+            "keys": keys,
+            "child_tags": child_tags,
+            "selected_tag": selected_tag,
+            "selected_key": None,
+            "selected_child_tags": []
+        }
+    )
+
+
+
 @app.post("/map_fields", response_class=HTMLResponse)
 async def map_fields(
     request: Request,
