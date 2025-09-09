@@ -9,87 +9,91 @@
     <main class="flex-grow max-w-6xl mx-auto p-6">
         <h1 class="text-2xl font-bold mb-6">Excel File Compare</h1>
 
-        <form method="post" action="/upload_excel_files" enctype="multipart/form-data"
-              class="bg-white p-6 rounded-2xl shadow mb-6">
+        <form method="post" action="/upload_excel_files" enctype="multipart/form-data" class="bg-white p-6 rounded-2xl shadow mb-6">
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Upload Template</label>
-                    <input type="file" name="file1" required
-                           class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
+                    <input type="file" name="file1" required class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Report File</label>
-                    <input type="file" name="file2" required
-                           class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
+                    <input type="file" name="file2" required class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
                 </div>
             </div>
-            <button type="submit"
-                    class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+            <button type="submit" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
                 Upload
             </button>
         </form>
 
-        {% if columns1 and columns2 %}
-        <form id="mappingForm" method="post" action="/map_fields" class="bg-white p-6 rounded-2xl shadow">
+        {% if columns1 and not selected_key1 %}
+        <form method="post" action="/select_key" class="bg-white p-6 rounded-2xl shadow">
+            <h2 class="text-xl font-semibold mb-4">Step 1: Select Key Fields</h2>
             <input type="hidden" name="file1" value="{{ file1 }}">
             <input type="hidden" name="file2" value="{{ file2 }}">
-            <input type="hidden" name="other_mappings" id="other_mappings">
-
-            <h2 class="text-xl font-semibold mb-4">Map Fields</h2>
-            {% if error %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <span class="block sm:inline">{{ error }}</span>
-            </div>
-            {% endif %}
-
+            
             <div class="grid md:grid-cols-2 gap-4 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Key Field (Template)</label>
-                    <select name="key_field1" required
-                             class="mt-1 block w-full border rounded p-2">
+                    <select name="key_field1" required class="mt-1 block w-full border rounded p-2">
                         {% for col in columns1 %}
-                        <option value="{{ col }}" {% if selected_key1==col %}selected{% endif %}>{{ col }}</option>
+                        <option value="{{ col }}">{{ col }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Key Field (Report)</label>
-                    <select name="key_field2" required
-                             class="mt-1 block w-full border rounded p-2">
+                    <select name="key_field2" required class="mt-1 block w-full border rounded p-2">
                         {% for col in columns2 %}
-                        <option value="{{ col }}" {% if selected_key2==col %}selected{% endif %}>{{ col }}</option>
+                        <option value="{{ col }}">{{ col }}</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+                Next
+            </button>
+        </form>
+        {% endif %}
 
+        {% if selected_key1 %}
+        <form id="mappingForm" method="post" action="/map_fields" class="bg-white p-6 rounded-2xl shadow">
+            <h2 class="text-xl font-semibold mb-4">Step 2: Map Other Fields</h2>
+            <input type="hidden" name="file1" value="{{ file1 }}">
+            <input type="hidden" name="file2" value="{{ file2 }}">
+            <input type="hidden" name="key_field1" value="{{ selected_key1 }}">
+            <input type="hidden" name="key_field2" value="{{ selected_key2 }}">
+            <input type="hidden" name="other_mappings" id="other_mappings">
+            
+            <div class="mb-4">
+                <p class="text-sm font-medium text-gray-700">Selected Key Fields:</p>
+                <p class="font-semibold">{{ selected_key1 }} &rarr; {{ selected_key2 }}</p>
+            </div>
+            
             <div class="mb-6 grid lg:grid-cols-3 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Template Fields</label>
                     <select id="templateFields" multiple size="10" class="w-full h-48 border rounded p-2 focus:ring focus:ring-blue-200">
                         {% for col in columns1 %}
                             {% if col != selected_key1 %}
-                                <option value="{{ col }}">{{ col }}</option>
+                            <option value="{{ col }}">{{ col }}</option>
                             {% endif %}
                         {% endfor %}
                     </select>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Report Fields</label>
                     <select id="reportFields" multiple size="10" class="w-full h-48 border rounded p-2 focus:ring focus:ring-blue-200">
                         {% for col in columns2 %}
                             {% if col != selected_key2 %}
-                                <option value="{{ col }}">{{ col }}</option>
+                            <option value="{{ col }}">{{ col }}</option>
                             {% endif %}
                         {% endfor %}
                     </select>
                 </div>
-
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Mapped Fields</label>
                     <ul id="mappedList" class="w-full h-48 border rounded p-2 overflow-auto bg-gray-100 text-sm">
-                        {% if mapped_pairs %}
+                         {% if mapped_pairs %}
                             {% for pair in mapped_pairs %}
                                 <li class="bg-white p-2 mb-1 rounded flex justify-between items-center">
                                     <span>{{ pair.template }} &rarr; {{ pair.report }}</span>
@@ -104,12 +108,10 @@
                 </div>
             </div>
 
-            <button type="button" id="addMappingBtn"
-                    class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow hover:bg-gray-400 mr-2">
+            <button type="button" id="addMappingBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow hover:bg-gray-400 mr-2">
                 Add Mapping
             </button>
-            <button type="submit"
-                    class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700">
+            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700">
                 Compare
             </button>
         </form>
@@ -145,6 +147,7 @@
             {% endfor %}
         </div>
         {% endif %}
+
     </main>
 
     <script>
@@ -156,13 +159,16 @@
             const otherMappingsInput = document.getElementById('other_mappings');
             const mappingForm = document.getElementById('mappingForm');
 
-            // Initialize or load existing mappings
             let mappedPairs = [];
+            // This is for when the form is submitted with an error, the pairs are re-populated
             if (otherMappingsInput.value) {
-                mappedPairs = JSON.parse(otherMappingsInput.value);
+                try {
+                    mappedPairs = JSON.parse(otherMappingsInput.value);
+                } catch (e) {
+                    console.error("Failed to parse existing mappings:", e);
+                }
             }
 
-            // Function to render the mapped list
             const renderMappedList = () => {
                 mappedList.innerHTML = '';
                 mappedPairs.forEach(pair => {
@@ -179,7 +185,6 @@
                 });
             };
 
-            // Event listener for the "Add Mapping" button
             addMappingBtn.addEventListener('click', () => {
                 const templateField = templateFields.value;
                 const reportField = reportFields.value;
@@ -197,7 +202,6 @@
                 }
             });
 
-            // Function to remove a mapping
             window.removeMapping = (button) => {
                 const li = button.parentElement;
                 const pairValue = JSON.parse(li.querySelector('input[type="hidden"]').value);
@@ -205,10 +209,14 @@
                 renderMappedList();
             };
 
-            // Before form submission, populate the hidden input
-            mappingForm.addEventListener('submit', () => {
-                otherMappingsInput.value = JSON.stringify(mappedPairs);
-            });
+            if (mappingForm) {
+                mappingForm.addEventListener('submit', () => {
+                    otherMappingsInput.value = JSON.stringify(mappedPairs);
+                });
+            }
+
+            // Initial render on page load
+            renderMappedList();
         });
     </script>
 </body>
