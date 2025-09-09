@@ -79,11 +79,10 @@ async def map_fields(
 
     # Parse the JSON string from the new mapping UI
     mappings = {}
+    mapped_pairs = []
     if other_mappings and other_mappings != '[]':
         try:
             mapped_pairs = json.loads(other_mappings)
-            for pair in mapped_pairs:
-                mappings[pair['template']] = pair['report']
         except json.JSONDecodeError:
             # Handle malformed JSON gracefully
             return templates.TemplateResponse(
@@ -101,8 +100,32 @@ async def map_fields(
                     "mapped_pairs": []
                 }
             )
-    else:
-        mapped_pairs = []
+
+    # --- New Validation Logic ---
+    for pair in mapped_pairs:
+        if pair['template'] == key_field1 or pair['report'] == key_field2:
+            return templates.TemplateResponse(
+                "excel_compare.html",
+                {
+                    "request": request,
+                    "error": "Key field is already mapped.",
+                    "columns1": df1.columns.tolist(),
+                    "columns2": df2.columns.tolist(),
+                    "file1": file1,
+                    "file2": file2,
+                    "diffs": None,
+                    "selected_key1": key_field1,
+                    "selected_key2": key_field2,
+                    "mapped_pairs": mapped_pairs
+                }
+            )
+        
+    # Build the final mappings dictionary
+    for pair in mapped_pairs:
+        mappings[pair['template']] = pair['report']
+        
+    # Add key fields to mappings for consistent processing
+    mappings[key_field1] = key_field2
 
     # Ensure key fields exist
     if key_field1 not in df1.columns or key_field2 not in df2.columns:
@@ -154,6 +177,7 @@ async def map_fields(
             "selected_key2": key_field2
         }
     )
+
 
 # ---------------- Helper Functions ----------------
 # The rest of your helper functions are not changed and can be kept as-is.
