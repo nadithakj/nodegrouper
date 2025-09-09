@@ -71,7 +71,7 @@ async def map_fields(
     file2: str = Form(...),
     key_field1: str = Form(...),
     key_field2: str = Form(...),
-    other_mappings: str = Form(...)  # New field for other mappings
+    other_mappings: str = Form(None)  # Changed to allow None
 ):
     # Convert JSON back to DataFrames
     df1 = pd.DataFrame.from_records(json.loads(file1))
@@ -79,11 +79,31 @@ async def map_fields(
 
     # Parse the JSON string from the new mapping UI
     mappings = {}
-    if other_mappings:
-        mapped_pairs = json.loads(other_mappings)
-        for pair in mapped_pairs:
-            mappings[pair['template']] = pair['report']
-    
+    if other_mappings and other_mappings != '[]':
+        try:
+            mapped_pairs = json.loads(other_mappings)
+            for pair in mapped_pairs:
+                mappings[pair['template']] = pair['report']
+        except json.JSONDecodeError:
+            # Handle the error gracefully if the JSON is malformed
+            return templates.TemplateResponse(
+                "excel_compare.html",
+                {
+                    "request": request,
+                    "error": "Error parsing field mappings. Please try again.",
+                    "columns1": df1.columns.tolist(),
+                    "columns2": df2.columns.tolist(),
+                    "file1": file1,
+                    "file2": file2,
+                    "diffs": None,
+                    "selected_key1": key_field1,
+                    "selected_key2": key_field2,
+                    "mapped_pairs": [] # Reset mappings on error
+                }
+            )
+    else:
+        mapped_pairs = []
+
     # Add key fields to mappings for consistent processing
     mappings[key_field1] = key_field2
 
@@ -96,12 +116,12 @@ async def map_fields(
                 "error": "Key field not found in one of the files.",
                 "columns1": df1.columns.tolist(),
                 "columns2": df2.columns.tolist(),
-                "file1": df1.to_json(orient="records"),
-                "file2": df2.to_json(orient="records"),
+                "file1": file1,
+                "file2": file2,
                 "diffs": None,
                 "selected_key1": key_field1,
                 "selected_key2": key_field2,
-                "mapped_pairs": mapped_pairs # Pass back the mappings to repopulate the UI
+                "mapped_pairs": mapped_pairs
             }
         )
 
@@ -113,7 +133,6 @@ async def map_fields(
     for f1, f2 in mappings.items():
         if f1 in df1.columns and f2 in df2.columns:
             # Drop rows where values are equal after converting to string and stripping whitespace
-            # This is a more robust comparison
             diff_rows = merged[merged[f"{f1}_file1"].astype(str).str.strip() != merged[f"{f2}_file2"].astype(str).str.strip()]
             if not diff_rows.empty:
                 diffs.append({
@@ -121,18 +140,19 @@ async def map_fields(
                     "field2": f2,
                     "differences": diff_rows[[key_field1, f"{f1}_file1", f"{f2}_file2"]].to_dict(orient="records")
                 })
-    
+
     return templates.TemplateResponse(
         "excel_compare.html",
         {
             "request": request,
             "columns1": df1.columns.tolist(),
             "columns2": df2.columns.tolist(),
-            "file1": df1.to_json(orient="records"),
-            "file2": df2.to_json(orient="records"),
+            "file1": file1,
+            "file2": file2,
             "diffs": diffs,
             "selected_key1": key_field1,
-            "selected_key2": key_field2
+            "selected_key2": key_field2,
+            "mapped_pairs": mapped_pairs # Pass back the mappings to the template
         }
     )
 
