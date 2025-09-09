@@ -5,87 +5,72 @@
     <title>Excel Compare</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 font-sans flex flex-col">
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <main class="flex-grow max-w-6xl mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-6">Excel File Compare</h1>
 
-<!-- Back Button -->
-<div class="p-4">
-    <a href="/" 
-       class="flex items-center bg-gray-700 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-800 transition">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 2.5l-7 7V17a1 1 0 001 1h4a1 1 0 001-1v-3h2v3a1 1 0 001 1h4a1 1 0 001-1v-7.5l-7-7z"/>
-        </svg>
-        Back to Home
-    </a>
-</div>
-
-<!-- Main Container -->
-<main class="flex-grow max-w-6xl mx-auto p-6">
-    <h1 class="text-4xl font-extrabold text-center mb-10 text-gray-800">
-        Excel <span class="text-blue-600">File Compare</span>
-    </h1>
-
-    <!-- Upload Section -->
-    {% if not columns1 and not columns2 %}
-    <div class="bg-white shadow rounded-2xl p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Upload Files</h2>
-        <form action="/upload_excel_files" method="post" enctype="multipart/form-data" class="space-y-4">
-            <div>
-                <label class="block font-medium text-gray-700">Upload Template File:</label>
-                <input type="file" name="file1" required 
-                       class="w-full border rounded-lg px-3 py-2 text-gray-700">
+        <!-- Upload form -->
+        <form method="post" action="/upload_excel_files" enctype="multipart/form-data"
+              class="bg-white p-6 rounded-2xl shadow mb-6">
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Upload Template</label>
+                    <input type="file" name="file1" required
+                           class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Report File</label>
+                    <input type="file" name="file2" required
+                           class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
+                </div>
             </div>
-            <div>
-                <label class="block font-medium text-gray-700">Upload Report File:</label>
-                <input type="file" name="file2" required 
-                       class="w-full border rounded-lg px-3 py-2 text-gray-700">
-            </div>
-            <button type="submit" 
-                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition shadow">
-                Upload Files
+            <button type="submit"
+                    class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+                Upload
             </button>
         </form>
-    </div>
-    {% endif %}
 
-    <!-- Mapping Section -->
-    {% if columns1 and columns2 %}
-    <div class="bg-white shadow rounded-2xl p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Map Fields</h2>
-        <form action="/map_fields" method="post" class="space-y-6">
+        {% if columns1 and columns2 %}
+        <!-- Mapping interface -->
+        <form method="post" action="/map_fields" class="bg-white p-6 rounded-2xl shadow">
             <input type="hidden" name="file1" value="{{ file1 }}">
             <input type="hidden" name="file2" value="{{ file2 }}">
 
-            <!-- Key Field Selection -->
-            <div class="grid grid-cols-2 gap-6">
+            <h2 class="text-xl font-semibold mb-4">Map Fields</h2>
+
+            <!-- Key fields -->
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
                 <div>
-                    <label class="block text-gray-600 font-medium mb-1">Key Field (Template File)</label>
-                    <select name="key_field1" class="w-full border rounded-lg p-2 text-gray-700" required>
+                    <label class="block text-sm font-medium text-gray-700">Key Field (Template)</label>
+                    <select name="key_field1" required
+                            class="mt-1 block w-full border rounded p-2">
                         {% for col in columns1 %}
-                            <option value="{{ col }}" {% if col == selected_key1 %}selected{% endif %}>{{ col }}</option>
+                        <option value="{{ col }}" {% if selected_key1==col %}selected{% endif %}>{{ col }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-gray-600 font-medium mb-1">Key Field (Report File)</label>
-                    <select name="key_field2" class="w-full border rounded-lg p-2 text-gray-700" required>
+                    <label class="block text-sm font-medium text-gray-700">Key Field (Report)</label>
+                    <select name="key_field2" required
+                            class="mt-1 block w-full border rounded p-2">
                         {% for col in columns2 %}
-                            <option value="{{ col }}" {% if col == selected_key2 %}selected{% endif %}>{{ col }}</option>
+                        <option value="{{ col }}" {% if selected_key2==col %}selected{% endif %}>{{ col }}</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
 
-            <!-- Optional Field Mappings (Dropdown-based) -->
-            <div>
-                <label class="block text-gray-600 font-medium mb-4">Optional Field Mappings</label>
-                <div class="space-y-3">
+            <!-- Optional field mappings -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Optional Field Mappings</label>
+                <div class="grid md:grid-cols-2 gap-4">
                     {% for col in columns1 %}
-                    <div class="flex items-center space-x-4">
-                        <label class="w-1/3 font-medium text-gray-700">{{ col }}</label>
-                        <select name="mapping_{{ col }}" class="border rounded-lg p-2 w-2/3 text-gray-700">
-                            <option value="">-- No Mapping --</option>
-                            {% for rcol in columns2 %}
-                                <option value="{{ rcol }}">{{ rcol }}</option>
+                    <div class="flex items-center gap-2">
+                        <span class="w-1/2 text-gray-700">{{ col }}</span>
+                        <select name="mapping_{{ col }}" class="w-1/2 border rounded p-1">
+                            <option value="">-- Not Mapped --</option>
+                            {% for col2 in columns2 %}
+                            <option value="{{ col2 }}">{{ col2 }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -93,54 +78,44 @@
                 </div>
             </div>
 
-            <button type="submit" 
-                    class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition shadow">
-                Compare Files
+            <button type="submit"
+                    class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700">
+                Compare
             </button>
         </form>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Results Section -->
-    {% if diffs %}
-    <div class="bg-white shadow rounded-2xl p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Differences Found</h2>
-        {% for diff in diffs %}
-        <div class="mb-6">
-            <h3 class="text-lg font-bold text-blue-600 mb-2">
-                {{ diff.field1 }} (Template) vs {{ diff.field2 }} (Report)
-            </h3>
-            <table class="w-full border border-gray-200 rounded-lg overflow-hidden">
-                <thead class="bg-gray-100 text-gray-700">
-                    <tr>
-                        <th class="px-3 py-2 text-left border">Key</th>
-                        <th class="px-3 py-2 text-left border">Template Value</th>
-                        <th class="px-3 py-2 text-left border">Report Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in diff.differences %}
-                    <tr class="border-t">
-                        <td class="px-3 py-2 border">{{ row[selected_key1] }}</td>
-                        <td class="px-3 py-2 border">{{ row[diff.field1 + "_file1"] }}</td>
-                        <td class="px-3 py-2 border">{{ row[diff.field2 + "_file2"] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Results -->
+        {% if diffs %}
+        <div class="mt-6 bg-white p-6 rounded-2xl shadow">
+            <h2 class="text-xl font-semibold mb-4">Differences Found</h2>
+            {% for diff in diffs %}
+            <div class="mb-4">
+                <h3 class="font-semibold text-gray-800">
+                    {{ diff.field1 }} ↔ {{ diff.field2 }}
+                </h3>
+                <table class="mt-2 w-full border text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="border px-2 py-1">Key</th>
+                            <th class="border px-2 py-1">{{ diff.field1 }} (Template)</th>
+                            <th class="border px-2 py-1">{{ diff.field2 }} (Report)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in diff.differences %}
+                        <tr>
+                            <td class="border px-2 py-1">{{ row[selected_key1] }}</td>
+                            <td class="border px-2 py-1">{{ row[diff.field1 ~ "_file1"] }}</td>
+                            <td class="border px-2 py-1">{{ row[diff.field2 ~ "_file2"] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-    {% elif diffs is not none %}
-    <div class="bg-white shadow rounded-2xl p-6 text-green-700 font-semibold">
-        ✅ No differences found!
-    </div>
-    {% endif %}
-</main>
-
-<footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200">
-    &copy; 2025 Nadi Jayasekara. All rights reserved.
-</footer>
-
+        {% endif %}
+    </main>
 </body>
 </html>
