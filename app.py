@@ -70,12 +70,21 @@ async def map_fields(
     file2: str = Form(...),
     key_field1: str = Form(...),
     key_field2: str = Form(...),
-    mappings: str = Form("")  # comma-separated field mappings "fieldA:fieldB"
+    request_form: dict = None
 ):
+    # Convert back to DataFrames
     df1 = pd.DataFrame.from_records(eval(file1))
     df2 = pd.DataFrame.from_records(eval(file2))
 
-    # Ensure key exists in both
+    # Collect mappings from dynamic form fields
+    form = await request.form()
+    mappings = {}
+    for field, value in form.items():
+        if field.startswith("mapping_") and value:
+            template_field = field.replace("mapping_", "")
+            mappings[template_field] = value
+
+    # Ensure key fields exist
     if key_field1 not in df1.columns or key_field2 not in df2.columns:
         return templates.TemplateResponse(
             "excel_compare.html",
@@ -90,24 +99,20 @@ async def map_fields(
             }
         )
 
-    # Merge on key fields
+    # Merge data on key fields
     merged = df1.merge(df2, left_on=key_field1, right_on=key_field2, suffixes=("_file1", "_file2"))
 
-    # Process optional mappings
+    # Compare mapped fields
     diffs = []
-    if mappings:
-        for mapping in mappings.split(","):
-            if ":" in mapping:
-                f1, f2 = mapping.split(":")
-                f1, f2 = f1.strip(), f2.strip()
-                if f1 in df1.columns and f2 in df2.columns:
-                    diff_rows = merged[merged[f"{f1}_file1"] != merged[f"{f2}_file2"]]
-                    if not diff_rows.empty:
-                        diffs.append({
-                            "field1": f1,
-                            "field2": f2,
-                            "differences": diff_rows[[key_field1, f"{f1}_file1", f"{f2}_file2"]].to_dict(orient="records")
-                        })
+    for f1, f2 in mappings.items():
+        if f1 in df1.columns and f2 in df2.columns:
+            diff_rows = merged[merged[f"{f1}_file1"] != merged[f"{f2}_file2"]]
+            if not diff_rows.empty:
+                diffs.append({
+                    "field1": f1,
+                    "field2": f2,
+                    "differences": diff_rows[[key_field1, f"{f1}_file1", f"{f2}_file2"]].to_dict(orient="records")
+                })
 
     return templates.TemplateResponse(
         "excel_compare.html",
@@ -122,7 +127,6 @@ async def map_fields(
             "selected_key2": key_field2
         }
     )
-
 
 # ---------------- Helper Functions ----------------
 def get_groupable_tags(xml_content: str):
