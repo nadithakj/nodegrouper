@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Data Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col font-sans">
+
+    <div class="p-4">
+        <a href="/" 
+           class="flex items-center bg-gray-700 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-800 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2.5l-7 7V17a1 1 0 001 1h4a1 1 0 001-1v-3h2v3a1 1 0 001 1h4a1 1 0 001-1v-7.5l-7-7z"/>
+            </svg>
+            Back to Home
+        </a>
+    </div>
+
+    <header class="p-6 bg-white shadow-md">
+        <h1 class="text-4xl font-extrabold text-center text-gray-800">
+            Test Data <span class="text-red-600">Hub</span>
+        </h1>
+        <p class="text-center text-gray-500 mt-2">Centralized tools for test data creation and management</p>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 max-w-6xl w-full p-6">
+            
+            <a href="/data_generator" 
+               class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+                <div class="bg-indigo-100 text-indigo-600 p-4 rounded-full mb-6 group-hover:bg-indigo-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3 .895 3 2s-1.343 2-3 2-3-.895-3-2 1.343-2 3-2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14c-1.657 0-3-.895-3-2s1.343-2 3-2 3 .895 3 2-1.343 2-3 2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20c-1.657 0-3-.895-3-2s1.343-2 3-2 3 .895 3 2-1.343 2-3 2z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4a8 8 0 100 16 8 8 0 000-16z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Data Generator</h2>
+                <p class="text-gray-600">Create realistic dummy data based on specified rules.</p>
+            </a>
+
+            <a href="/xml_creator"
+               class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+                <div class="bg-orange-100 text-orange-600 p-4 rounded-full mb-6 group-hover:bg-orange-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-9m4-9l4 9m-1.681 5.904a3 3 0 01-5.832 0M12 20h9M3 20h9" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">XML Data Creator</h2>
+                <p class="text-gray-600">Generate XML files from a simple template or schema.</p>
+            </a>
+
+            <a href="/sql_builder"
+               class="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 flex flex-col items-center text-center">
+                <div class="bg-cyan-100 text-cyan-600 p-4 rounded-full mb-6 group-hover:bg-cyan-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10m-3-3h4m0-10h4m0 10h4m-3 3v4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21v-7m4 0h-4m-1 7l-2-2m-2 2l2-2" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">SQL Query Builder</h2>
+                <p class="text-gray-600">Visually construct and test SQL queries for data extraction.</p>
+            </a>
+
+        </div>
+    </main>
+
+    <footer class="p-6 text-center text-gray-500 text-sm bg-gradient-to-r from-gray-100 to-gray-200 border-t">
+        &copy; 2025 Nadi Jayasekara. All rights reserved.
+    </footer>
+
+</body>
+</html>
