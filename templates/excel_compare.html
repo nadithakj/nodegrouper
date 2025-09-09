@@ -4,26 +4,49 @@
     <meta charset="UTF-8">
     <title>Excel Compare</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
-    <main class="flex-grow max-w-6xl mx-auto p-6">
-        <h1 class="text-2xl font-bold mb-6">Excel File Compare</h1>
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col font-sans">
 
-        <form method="post" action="/upload_excel_files" enctype="multipart/form-data" class="bg-white p-6 rounded-2xl shadow mb-6">
-            <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Upload Template</label>
-                    <input type="file" name="file1" required class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
+    <div class="p-4">
+        <a href="/" 
+           class="flex items-center bg-gray-700 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-800 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 2.5l-7 7V17a1 1 0 001 1h4a1 1 0 001-1v-3h2v3a1 1 0 001 1h4a1 1 0 001-1v-7.5l-7-7z"/>
+            </svg>
+            Back to Home
+        </a>
+    </div>
+
+    <main class="flex-grow max-w-6xl mx-auto p-6">
+        <h1 class="text-5xl font-extrabold mb-10 text-center text-gray-800">
+            Excel <span class="text-blue-600">Compare</span>
+        </h1>
+
+        <div class="bg-white p-6 rounded-2xl shadow mb-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Upload Excel Files</h2>
+            <form method="post" action="/upload_excel_files" enctype="multipart/form-data">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Upload Template</label>
+                        <input type="file" name="file1" required class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Report File</label>
+                        <input type="file" name="file2" required class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Report File</label>
-                    <input type="file" name="file2" required class="mt-1 block w-full text-sm text-gray-700 border rounded p-2">
-                </div>
-            </div>
-            <button type="submit" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
-                Upload
-            </button>
-        </form>
+                <button type="submit" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+                    Upload
+                </button>
+            </form>
+        </div>
+
+        {% if error %}
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-xl shadow mb-6" role="alert">
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
 
         {% if columns1 and not selected_key1 %}
         <form method="post" action="/select_key" class="bg-white p-6 rounded-2xl shadow">
@@ -137,8 +160,8 @@
                         {% for row in diff.differences %}
                         <tr>
                             <td class="border px-2 py-1">{{ row[selected_key1] }}</td>
-                            <td class="border px-2 py-1">{{ row[diff.field1 ~ "_file1"] }}</td>
-                            <td class="border px-2 py-1">{{ row[diff.field2 ~ "_file2"] }}</td>
+                            <td class="border px-2 py-1">{{ row[diff.field1 ~ "_file1"] if diff.field1 ~ "_file1" in row else row[diff.field1] }}</td>
+                            <td class="border px-2 py-1">{{ row[diff.field2 ~ "_file2"] if diff.field2 ~ "_file2" in row else row[diff.field2] }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -147,8 +170,11 @@
             {% endfor %}
         </div>
         {% endif %}
-
     </main>
+
+    <footer class="p-6 text-center text-gray-500 text-sm border-t border-gray-200 mt-auto">
+        &copy; 2025 Nadi Jayasekara. All rights reserved.
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -160,8 +186,7 @@
             const mappingForm = document.getElementById('mappingForm');
 
             let mappedPairs = [];
-            // This is for when the form is submitted with an error, the pairs are re-populated
-            if (otherMappingsInput.value) {
+            if (otherMappingsInput && otherMappingsInput.value) {
                 try {
                     mappedPairs = JSON.parse(otherMappingsInput.value);
                 } catch (e) {
@@ -185,22 +210,24 @@
                 });
             };
 
-            addMappingBtn.addEventListener('click', () => {
-                const templateField = templateFields.value;
-                const reportField = reportFields.value;
+            if (addMappingBtn) {
+                addMappingBtn.addEventListener('click', () => {
+                    const templateField = templateFields.value;
+                    const reportField = reportFields.value;
 
-                if (templateField && reportField) {
-                    const newPair = { template: templateField, report: reportField };
-                    if (!mappedPairs.some(p => p.template === newPair.template || p.report === newPair.report)) {
-                         mappedPairs.push(newPair);
-                         renderMappedList();
+                    if (templateField && reportField) {
+                        const newPair = { template: templateField, report: reportField };
+                        if (!mappedPairs.some(p => p.template === newPair.template || p.report === newPair.report)) {
+                            mappedPairs.push(newPair);
+                            renderMappedList();
+                        } else {
+                            alert("A field can only be mapped once!");
+                        }
                     } else {
-                        alert("A field can only be mapped once!");
+                        alert('Please select a field from both lists.');
                     }
-                } else {
-                    alert('Please select a field from both lists.');
-                }
-            });
+                });
+            }
 
             window.removeMapping = (button) => {
                 const li = button.parentElement;
@@ -215,7 +242,6 @@
                 });
             }
 
-            // Initial render on page load
             renderMappedList();
         });
     </script>
