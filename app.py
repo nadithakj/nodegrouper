@@ -71,7 +71,7 @@ async def map_fields(
     file2: str = Form(...),
     key_field1: str = Form(...),
     key_field2: str = Form(...),
-    other_mappings: str = Form(None)  # Changed to allow None
+    other_mappings: str = Form(None)
 ):
     # Convert JSON back to DataFrames
     df1 = pd.DataFrame.from_records(json.loads(file1))
@@ -85,7 +85,7 @@ async def map_fields(
             for pair in mapped_pairs:
                 mappings[pair['template']] = pair['report']
         except json.JSONDecodeError:
-            # Handle the error gracefully if the JSON is malformed
+            # Handle malformed JSON gracefully
             return templates.TemplateResponse(
                 "excel_compare.html",
                 {
@@ -98,14 +98,11 @@ async def map_fields(
                     "diffs": None,
                     "selected_key1": key_field1,
                     "selected_key2": key_field2,
-                    "mapped_pairs": [] # Reset mappings on error
+                    "mapped_pairs": []
                 }
             )
     else:
         mapped_pairs = []
-
-    # Add key fields to mappings for consistent processing
-    mappings[key_field1] = key_field2
 
     # Ensure key fields exist
     if key_field1 not in df1.columns or key_field2 not in df2.columns:
@@ -130,17 +127,20 @@ async def map_fields(
 
     # Compare mapped fields
     diffs = []
+    # Loop through the mappings and perform the comparison
     for f1, f2 in mappings.items():
+        # This check is crucial to prevent the KeyError
         if f1 in df1.columns and f2 in df2.columns:
-            # Drop rows where values are equal after converting to string and stripping whitespace
+            # Check for differences, stripping whitespace for robustness
             diff_rows = merged[merged[f"{f1}_file1"].astype(str).str.strip() != merged[f"{f2}_file2"].astype(str).str.strip()]
             if not diff_rows.empty:
                 diffs.append({
                     "field1": f1,
                     "field2": f2,
+                    # Access columns correctly, using the key field's original name
                     "differences": diff_rows[[key_field1, f"{f1}_file1", f"{f2}_file2"]].to_dict(orient="records")
                 })
-
+    
     return templates.TemplateResponse(
         "excel_compare.html",
         {
@@ -151,11 +151,9 @@ async def map_fields(
             "file2": file2,
             "diffs": diffs,
             "selected_key1": key_field1,
-            "selected_key2": key_field2,
-            "mapped_pairs": mapped_pairs # Pass back the mappings to the template
+            "selected_key2": key_field2
         }
     )
-
 
 # ---------------- Helper Functions ----------------
 # The rest of your helper functions are not changed and can be kept as-is.
