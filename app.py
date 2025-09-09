@@ -5,6 +5,7 @@ from lxml import etree
 from collections import defaultdict
 import io
 import pandas as pd
+import json
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -69,15 +70,15 @@ async def map_fields(
     file1: str = Form(...),
     file2: str = Form(...),
     key_field1: str = Form(...),
-    key_field2: str = Form(...),
-    request_form: dict = None
+    key_field2: str = Form(...)
 ):
-    # Convert back to DataFrames
-    df1 = pd.DataFrame.from_records(eval(file1))
-    df2 = pd.DataFrame.from_records(eval(file2))
+    form = await request.form()
+
+    # Convert JSON back to DataFrames
+    df1 = pd.DataFrame.from_records(json.loads(file1))
+    df2 = pd.DataFrame.from_records(json.loads(file2))
 
     # Collect mappings from dynamic form fields
-    form = await request.form()
     mappings = {}
     for field, value in form.items():
         if field.startswith("mapping_") and value:
@@ -93,13 +94,13 @@ async def map_fields(
                 "error": "Key field not found in one of the files.",
                 "columns1": df1.columns.tolist(),
                 "columns2": df2.columns.tolist(),
-                "file1": df1.to_json(orient='records'),
-                "file2": df2.to_json(orient='records'),
+                "file1": df1.to_json(orient="records"),
+                "file2": df2.to_json(orient="records"),
                 "diffs": None
             }
         )
 
-    # Merge data on key fields
+    # Merge on key fields
     merged = df1.merge(df2, left_on=key_field1, right_on=key_field2, suffixes=("_file1", "_file2"))
 
     # Compare mapped fields
@@ -120,13 +121,14 @@ async def map_fields(
             "request": request,
             "columns1": df1.columns.tolist(),
             "columns2": df2.columns.tolist(),
-            "file1": df1.to_json(orient='records'),
-            "file2": df2.to_json(orient='records'),
+            "file1": df1.to_json(orient="records"),
+            "file2": df2.to_json(orient="records"),
             "diffs": diffs,
             "selected_key1": key_field1,
             "selected_key2": key_field2
         }
     )
+
 
 # ---------------- Helper Functions ----------------
 def get_groupable_tags(xml_content: str):
