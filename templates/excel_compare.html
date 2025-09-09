@@ -75,13 +75,22 @@
                 </div>
             </div>
 
-            <!-- Optional Field Mappings -->
+            <!-- Optional Field Mappings (Dropdown-based) -->
             <div>
-                <label class="block text-gray-600 font-medium mb-1">Optional Field Mappings</label>
-                <p class="text-sm text-gray-500 mb-2">Enter as <code>field_in_template:field_in_report</code>, comma-separated.</p>
-                <textarea name="mappings" rows="3" 
-                          class="w-full border rounded-lg p-2 text-gray-700" 
-                          placeholder="Example: Name:EmployeeName, Hours:WorkedHours"></textarea>
+                <label class="block text-gray-600 font-medium mb-4">Optional Field Mappings</label>
+                <div class="space-y-3">
+                    {% for col in columns1 %}
+                    <div class="flex items-center space-x-4">
+                        <label class="w-1/3 font-medium text-gray-700">{{ col }}</label>
+                        <select name="mapping_{{ col }}" class="border rounded-lg p-2 w-2/3 text-gray-700">
+                            <option value="">-- No Mapping --</option>
+                            {% for rcol in columns2 %}
+                                <option value="{{ rcol }}">{{ rcol }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
 
             <button type="submit" 
